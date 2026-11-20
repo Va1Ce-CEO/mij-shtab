@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Мій штаб</title>
+<meta name="theme-color" content="#eef0f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1220" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Особистий планувальник: зміни, пари, справи, спорт, покупки, підписки.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Мій штаб">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one-screen app, tabs on top (desktop) or bottom (phone), quest-log hero with segmented XP bar. */
+:root{
+  --bg:#eef0f5;--surface:#ffffff;--surface-2:#f4f5fa;--ink:#14172b;--muted:#5d6380;--line:#dcdfe9;
+  --accent:#3d4ef0;--accent-soft:#e4e7ff;--on-accent:#ffffff;
+  --gold:#b87400;--gold-soft:#fdf0d0;
+  --c-shift:#1f7a8c;--c-study:#2563c9;--c-workout:#2a9455;--c-other:#7b4fd0;--c-deadline:#d9482a;
+  --bad:#c92a45;--bad-soft:#fde4e8;--good:#1b7f45;--good-soft:#dff3e6;
+  --font-body:'Onest',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-display:'Unbounded','Onest',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1220;--surface:#181c31;--surface-2:#1f2440;--ink:#eceefa;--muted:#a0a7ca;--line:#2b3052;
+    --accent:#8793ff;--accent-soft:#252c63;--on-accent:#0f1220;
+    --gold:#f2b33d;--gold-soft:#3a2f12;
+    --c-shift:#4cc0d6;--c-study:#79a8f5;--c-workout:#52c97f;--c-other:#a98cf0;--c-deadline:#ff7f5f;
+    --bad:#ff7a90;--bad-soft:#40202b;--good:#5fd18b;--good-soft:#17342a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1220;--surface:#181c31;--surface-2:#1f2440;--ink:#eceefa;--muted:#a0a7ca;--line:#2b3052;
+  --accent:#8793ff;--accent-soft:#252c63;--on-accent:#0f1220;
+  --gold:#f2b33d;--gold-soft:#3a2f12;
+  --c-shift:#4cc0d6;--c-study:#79a8f5;--c-workout:#52c97f;--c-other:#a98cf0;--c-deadline:#ff7f5f;
+  --bad:#ff7a90;--bad-soft:#40202b;--good:#5fd18b;--good-soft:#17342a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font-body);-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+.app{display:flex;flex-direction:column;height:100%;max-width:1000px;margin:0 auto}
+.top{order:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px 8px}
+.brand{font:600 17px var(--font-display);letter-spacing:-.01em}
+.sync{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block}
+.sync.ok i{background:var(--good)}
+.sync.saving i{background:var(--gold)}
+.tabs{order:3;display:flex;overflow-x:auto;scrollbar-width:none;background:var(--surface);border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px))}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;background:none;border:0;border-radius:10px;color:var(--muted);font-size:11px;font-weight:500;min-height:48px}
+.tab svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-current="page"]{color:var(--accent)}
+.tab[aria-current="page"] svg{stroke-width:2.2}
+main{order:2;flex:1;overflow-y:auto;padding:6px 16px 28px;-webkit-overflow-scrolling:touch}
+@media (min-width:760px){
+  .tabs{order:1;border-top:0;border-bottom:1px solid var(--line);background:none;padding:0 16px;gap:4px}
+  .tab{flex:0 0 auto;flex-direction:row;gap:8px;font-size:14px;padding:10px 14px;border-radius:0;border-bottom:2px solid transparent;min-height:44px}
+  .tab[aria-current="page"]{border-bottom-color:var(--accent)}
+  main{padding-top:16px}
+}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card h2{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.page-h{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.page-h h1{font:600 20px/1.2 var(--font-display);letter-spacing:-.01em;text-wrap:balance}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mono{font-family:var(--font-mono);font-size:13px}
+.hero{display:flex;gap:16px;align-items:center}
+.lv{display:flex;flex-direction:column;align-items:center;min-width:76px}
+.lv-n{font:600 40px/1 var(--font-display);color:var(--accent)}
+.lv-t{font-size:12px;color:var(--muted);margin-top:4px}
+.hero-r{flex:1;min-width:0}
+.segs{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;margin-bottom:8px}
+.segs b{height:10px;border-radius:2px;background:var(--line)}
+.segs b.on{background:var(--gold)}
+.row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .rb{flex:1;min-width:0;cursor:pointer;border-radius:6px}
+.ttl{font-weight:500;overflow-wrap:anywhere}
+.row.done .ttl{text-decoration:line-through;color:var(--muted)}
+.meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:3px}
+.bar{width:4px;align-self:stretch;border-radius:2px;flex:none;min-height:34px}
+.chk{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:var(--surface);padding:0;display:grid;place-items:center;margin-top:1px}
+.chk:hover{border-color:var(--accent)}
+.chk.on{background:var(--good);border-color:var(--good)}
+.chk.on::after{content:"";width:6px;height:11px;border:solid var(--surface);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.chk.sm{width:20px;height:20px;border-width:2px}
+.chk.sm.on::after{width:5px;height:9px;border-width:0 2px 2px 0}
+.pill{font-size:12px;line-height:1.5;padding:1px 8px;border-radius:99px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.warn{background:var(--gold-soft);color:var(--gold)}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.accent{background:var(--accent-soft);color:var(--accent)}
+.steps{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.steps li{display:flex;gap:8px;align-items:center;font-size:14px}
+.steps li.d span{text-decoration:line-through;color:var(--muted)}
+.prog{height:5px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent)}
+.btn{font-weight:500;font-size:14px;border-radius:10px;padding:8px 14px;min-height:40px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.btn.danger{color:var(--bad)}
+.btn.sm{min-height:34px;padding:5px 11px;font-size:13px}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.actions .danger{margin-right:auto}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.empty{padding:14px 0;color:var(--muted);font-size:14px}
+.banner{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--gold-soft);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:14px}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wday{border:1px solid var(--line);border-radius:10px;background:var(--surface-2);padding:6px 2px;text-align:center;font-size:12px;color:var(--muted);cursor:pointer;min-height:58px}
+.wday b{display:block;font:500 15px var(--font-body);color:var(--ink)}
+.wday.today{border-color:var(--accent);background:var(--accent-soft)}
+.dots{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.dot.shift{background:var(--c-shift)}.dot.study{background:var(--c-study)}.dot.workout{background:var(--c-workout)}.dot.other{background:var(--c-other)}.dot.deadline{background:var(--c-deadline)}.dot.sub{background:var(--gold)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:10px 0 2px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+.cal-h h2{font:500 16px var(--font-display);color:var(--ink);margin:0;text-transform:capitalize}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .hd{font-size:12px;color:var(--muted);text-align:center;padding:2px 0}
+.day{border:1px solid var(--line);background:var(--surface);border-radius:10px;min-height:54px;padding:5px 6px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:4px}
+.day .n{font-size:13px;font-weight:500}
+.day .dots{justify-content:flex-start;margin:0}
+.day.out{opacity:.45}
+.day.today .n{color:var(--accent);font-weight:600}
+.day.today{border-color:var(--accent)}
+.day.sel{background:var(--accent-soft);border-color:var(--accent)}
+.free{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.place-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px}
+.place-h h3{font:500 16px var(--font-display)}
+.wk{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+.wk td{padding:4px 0;border-top:1px solid var(--line)}
+.wk td:last-child{text-align:right;font-family:var(--font-mono);font-size:13px}
+.wk tr.now td{font-weight:600;color:var(--accent)}
+.sec{margin:18px 0 6px;font-size:13px;font-weight:600;color:var(--muted)}
+.scrim{position:fixed;inset:0;background:rgba(10,12,30,.55);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{background:var(--surface);width:100%;max-width:520px;max-height:94%;overflow-y:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+@media (min-width:760px){.scrim{align-items:center}.sheet{border-radius:18px;padding-bottom:20px}}
+.sheet h2{font:600 17px var(--font-display);margin-bottom:6px}
+.sheet label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+.sheet input[type=text],.sheet input[type=date],.sheet input[type=time],.sheet select,.sheet textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 10px;min-height:42px}
+.sheet textarea{min-height:92px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.inl{display:flex!important;gap:8px;align-items:center;color:var(--ink)!important;font-size:14px!important}
+.inl input{width:18px;height:18px}
+.wds{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.wds label{margin:0;display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:99px;padding:5px 10px;font-size:13px;color:var(--ink);background:var(--surface-2)}
+.hrow{display:grid;grid-template-columns:36px 1fr 1fr auto;gap:8px;align-items:center;margin-top:8px}
+.hrow label{margin:0;display:flex;gap:5px;align-items:center;font-size:12px}
+.hrow input[type=time]{min-height:38px;padding:6px 8px}
+.err{color:var(--bad);font-size:13px;min-height:18px;margin-top:10px}
+.toast{position:fixed;left:50%;bottom:92px;transform:translate(-50%,10px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:500;font-size:14px;z-index:30;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:92%;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (min-width:760px){.toast{bottom:28px}}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.addrow{display:flex;gap:8px}
+.addrow input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:46px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 2px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 12px;font-size:13px;min-height:34px}
+.chip:hover{border-color:var(--accent)}
+.shrow{display:flex;align-items:center;border-top:1px solid var(--line)}
+.shrow:first-child{border-top:0}
+.sh-btn{flex:1;min-width:0;display:flex;align-items:center;gap:12px;background:none;border:0;padding:12px 0;text-align:left;min-height:54px;font-size:16px}
+.sh-btn .chk{pointer-events:none;margin:0}
+.shrow.done .ttl{text-decoration:line-through;color:var(--muted)}
+.x{background:none;border:0;color:var(--muted);font-size:22px;line-height:1;width:44px;height:44px;border-radius:10px;flex:none}
+.x:hover{color:var(--bad)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.tile b{display:block;font:600 22px var(--font-display)}
+.tile span{font-size:12px;color:var(--muted)}
+.lines{margin-top:4px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.chart{width:100%;height:auto;display:block;margin-top:8px}
+.exb{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px;background:var(--surface-2)}
+.exh{display:flex;gap:8px}
+.exh input{flex:1;min-width:0}
+.setr{display:grid;grid-template-columns:22px 1fr 1fr 40px;gap:6px;align-items:center;margin-top:6px}
+.sheet input[type=number]{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 8px;min-height:38px}
+.exb input[type=text]{background:var(--surface)!important}
+.icon-btn{background:none;border:0;color:var(--muted);width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none}
+.icon-btn:hover{color:var(--ink);background:var(--surface-2)}
+.icon-btn[aria-current="page"]{color:var(--accent)}
+.goal{display:flex;flex-direction:column;gap:5px;padding:10px 0;border-top:1px solid var(--line)}
+.goal:first-child{border-top:0}
+.goal-t{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:14px}
+.goal-t b{font-weight:500}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.seg button{flex:1 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;font-size:14px;min-height:42px}
+.seg button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.setrow:first-child{border-top:0}
+.setrow label{font-size:15px}
+.num{width:96px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;min-height:40px;text-align:right;font-family:var(--font-mono)}
+.sw{position:relative;width:48px;height:28px;flex:none}
+.sw input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.sw span{position:absolute;inset:0;background:var(--line);border-radius:99px;transition:background .15s}
+.sw span::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--surface);transition:transform .15s}
+.sw input:checked+span{background:var(--accent)}
+.sw input:checked+span::after{transform:translateX(20px)}
+.sw input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.catrow{display:flex;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.catrow:first-child{border-top:0}
+.catrow input{flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:42px}
+.catg{font-size:12px;font-weight:600;color:var(--muted);padding:12px 0 2px}
+.cbtn{background:var(--surface-2);border:1px solid var(--line);color:var(--muted);border-radius:99px;font-size:12px;padding:3px 10px;min-height:30px;flex:none;white-space:nowrap}
+.cbtn:hover{border-color:var(--accent);color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.sw span,.sw span::after{transition:none}}
+.h2b{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:0;padding:0 0 6px;font-size:13px;font-weight:600;color:var(--muted);text-align:left}
+.h2b:hover{color:var(--accent)}
+.h2b .ch{font-size:17px;line-height:1}
+.menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px}
+.mtile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;min-height:104px;text-align:left}
+.mtile:hover{border-color:var(--accent)}
+.mtile svg{width:24px;height:24px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mtile b{font-weight:500;font-size:15px}
+.mtile span{font-size:13px;color:var(--muted)}
+.ordrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.ordrow:first-child{border-top:0}
+.ordrow .nm{flex:1;min-width:0;font-size:14px}
+.ordrow .ab{width:38px;height:38px;border:1px solid var(--line);background:var(--surface);border-radius:9px;color:var(--muted);flex:none;font-size:15px}
+.ordrow .ab:hover{border-color:var(--accent);color:var(--accent)}
+.navpick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.navpick button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 13px;font-size:13px;min-height:38px}
+.navpick button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.hrow2{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.hrow2:first-child{border-top:0}
+.hbody{flex:1;min-width:0}
+.hname{font-weight:500}
+.hdots{display:flex;gap:4px;margin-top:6px}
+.hdots i{width:12px;height:12px;border-radius:3px;background:var(--line);display:block}
+.hdots i.done{background:var(--good)}
+.hdots i.off{background:transparent;border:1px dashed var(--line)}
+.flame{display:inline-flex;align-items:center;gap:4px;background:var(--gold-soft);color:var(--gold);border-radius:99px;padding:2px 9px;font-size:13px;font-weight:500;white-space:nowrap}
+.flame svg{width:13px;height:13px;fill:currentColor}
+.plan-t{display:flex;justify-content:space-between;gap:10px;font-size:14px;align-items:baseline}
+@media (max-width:759px){.tab.sec{display:none}}
+@media (min-width:760px){.tab.more{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">Мій штаб</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="sync" id="sync" aria-live="polite"><i></i><span>Підключаю…</span></div>
+      <button class="icon-btn" id="gear" data-act="tab" data-tab="prefs" aria-label="Налаштування"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.1 14.4a1.5 1.5 0 00.3 1.7l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.5 1.5 0 00-2.6 1.1v.2a2 2 0 11-4 0v-.1a1.5 1.5 0 00-2.6-1.1l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.5 1.5 0 00-1.1-2.6h-.2a2 2 0 110-4h.1a1.5 1.5 0 001.1-2.6l-.1-.1a2 2 0 112.8-2.8l.1.1a1.5 1.5 0 002.6-1.1v-.2a2 2 0 114 0v.1a1.5 1.5 0 002.6 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.5 1.5 0 001.1 2.6h.2a2 2 0 110 4h-.1a1.5 1.5 0 00-1.4.9z"/></svg></button>
+    </div>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Розділи"></nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="layer"></div>
+
+<script>
+(function(){
+'use strict';
+
+var $=function(s){return document.querySelector(s)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var pad=function(n){return String(n).padStart(2,'0')};
+var ymd=function(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+var parse=function(s){var p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2])};
+var addDays=function(s,n){var d=parse(s);d.setDate(d.getDate()+n);return ymd(d)};
+var wd=function(s){return (parse(s).getDay()+6)%7};
+var diffDays=function(a,b){return Math.round((parse(a)-parse(b))/86400000)};
+var toMin=function(t){var p=t.split(':').map(Number);return p[0]*60+p[1]};
+var fmtMin=function(m){return pad(Math.floor(m/60))+':'+pad(m%60)};
+var uid=function(){return Math.random().toString(36).slice(2,9)};
+var T=function(){return ymd(new Date())};
+function pl(n,f){n=Math.abs(Math.round(n));var a=n%10,b=n%100;return a===1&&b!==11?f[0]:(a>=2&&a<=4&&(b<12||b>14)?f[1]:f[2])}
+
+var WDS=['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+var WD_FULL=['понеділок','вівторок','середа','четвер',"п'ятниця",'субота','неділя'];
+var MONTHS=['січень','лютий','березень','квітень','травень','червень','липень','серпень','вересень','жовтень','листопад','грудень'];
+var MONTHS_GEN=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+var MONTHS_SH=['січ.','лют.','бер.','квіт.','трав.','черв.','лип.','серп.','вер.','жовт.','лист.','груд.'];
+var fmtDate=function(s){var d=parse(s);return d.getDate()+' '+MONTHS_SH[d.getMonth()]};
+var fmtLong=function(s){var d=parse(s);return WD_FULL[wd(s)]+', '+d.getDate()+' '+MONTHS_GEN[d.getMonth()]};
+
+var TYPES={shift:'Зміна',study:'Пара',workout:'Тренування',other:'Інше'};
+var CATS={study:'Навчання',project:'Проєкт',work:'Робота',home:'Побут',health:'Здоров’я'};
+var DIFF={easy:{n:'Легке',xp:10},mid:{n:'Середнє',xp:30},hard:{n:'Важке',xp:80},boss:{n:'Велике',xp:150}};
+var DIFF_CLS={easy:'good',mid:'accent',hard:'warn',boss:'bad'};
+var SPORTS={run:{n:'Біг',u:'км',goal:'км'},swim:{n:'Плавання',u:'м',goal:'м'},bike:{n:'Велосипед',u:'км',goal:'км'},gym:{n:'Зал',u:'',goal:'разів'},other:{n:'Інше',u:'',goal:'разів'}};
+var SPORT_KEYS=['run','swim','bike','gym','other'];
+var CARDIO={run:1,swim:1,bike:1};
+var GUESS={
+  home:['папір','фейр','fairy','порош','мило','шампун','зубн','паст','губк','пакет','серветк','засіб','чистя','освіжув','батарейк','лампочк','пральн','кондиціонер','ганчірк','сміттєв','рукавич','плівк','фольг','свічк','віник','швабр','дезодорант','бритв','піна для гол'],
+  pharm:['таблетк','вітамін','пластир','бинт','аптечк','ібупрофен','парацетамол','магній','цинк','омега','крем','мазь','сироп','краплі','термометр','маск'],
+  food:['молок','хліб','яйц','сир','масл','йогурт','кав','чай','цукор','сіль','борошн','рис','макарон','гречк','вівсян','банан','яблук','помідор','огірк','картопл','цибул','морков','мʼяс','мясо','м\'яс','курк','риб','ковбас','сметан','кефір','вода','сік','олі','печив','шоколад','горіх','мед','крупа','консерв','заморож','капуст','перец','лимон','салат','тунец','ізотонік','протеїн','батончик','гель енерг']
+};
+function guessCat(t){
+  var s=String(t).toLowerCase(),cats=(S.cfg&&S.cfg.shopCats)||[];
+  var has=function(id){return cats.some(function(c){return c.id===id})};
+  for(var k in GUESS){if(!has(k))continue;for(var i=0;i<GUESS[k].length;i++){if(s.indexOf(GUESS[k][i])>-1)return k}}
+  return has('food')?'food':(cats[0]?cats[0].id:'other');
+}
+var LVL_TITLES=['Новачок','Мандрівник','Шукач','Розвідник','Майстер','Легенда'];
+var WORKOUT_XP=20;var HABIT_XP=15;
+
+var ICONS={
+  today:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  deadlines:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  quests:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  hours:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  training:'<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>',
+  shop:'<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 11h11.2l2-8H6.2"/>',
+  deeds:'<path d="M9 5h11M9 12h11M9 19h11M4 5l1 1 2-2M4 12l1 1 2-2M4 19l1 1 2-2"/>',
+  subs:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h3"/>',
+  more:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  rewards:'<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M12 9v12M12 9c-3 0-4.6-.6-4.6-2.3C7.4 5.2 8.6 4.4 10 4.9c1.3.5 2 2.3 2 4.1zM12 9c3 0 4.6-.6 4.6-2.3 0-1.5-1.2-2.3-2.6-1.8-1.3.5-2 2.3-2 4.1z"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1v.3a2 2 0 11-4 0v-.2a1.6 1.6 0 00-2.8-1.1l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 004 15.6a2 2 0 00-1.8-1.2H2a2 2 0 110-4h.2A1.6 1.6 0 004 8.6a1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 001.8.3h.1A1.6 1.6 0 009.4 2.8v-.3a2 2 0 114 0v.2a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8v.1a1.6 1.6 0 001.5 1h.3a2 2 0 110 4h-.2a1.6 1.6 0 00-1.5 1z"/>'
+};
+var SECTIONS={
+  today:{n:'Сьогодні',d:'Головна на день'},
+  calendar:{n:'Календар',d:'Зміни, тренування, події'},
+  deeds:{n:'Справи',d:'Завдання і дедлайни'},
+  training:{n:'Спорт',d:'Тренування і цілі'},
+  rewards:{n:'Нагороди',d:'Магазин за очки'},
+  shop:{n:'Покупки',d:'Список до магазину'},
+  hours:{n:'Графіки',d:'Коли що відкрито'},
+  subs:{n:'Підписки',d:'Що і коли списується'},
+  prefs:{n:'Налаштування',d:'Під себе'}
+};
+var SEC_ORDER=['today','calendar','deeds','training','rewards','shop','subs','hours'];
+var NAV_PICK=['calendar','deeds','training','rewards','shop','subs','hours'];
+function secOn(k){return k!=='rewards'||S.cfg.xp}
+function allSecs(){return SEC_ORDER.filter(secOn)}
+function navMobile(){
+  var n=(S.cfg.nav||[]).filter(function(k){return k!=='today'&&SECTIONS[k]&&secOn(k)});
+  return ['today'].concat(n.slice(0,3));
+}
+function tabs(){return allSecs()}
+
+/* ---------- state ---------- */
+var LS='mij-shtab-v1';
+var HOME_BLOCKS=[
+  {id:'rewards',n:'Нагороди і виклик тижня',tab:'rewards'},
+  {id:'plan',n:'Сьогодні в плані',tab:'calendar'},
+  {id:'urgent',n:'Горить і на сьогодні',tab:'deeds'},
+  {id:'week',n:'Тиждень одним поглядом',tab:'calendar'},
+  {id:'goals',n:'Спорт: цілі тижня',tab:'training'},
+  {id:'next',n:'Найближчі справи',tab:'deeds'},
+  {id:'shop',n:'Купити',tab:'shop'},
+  {id:'subs',n:'Підписки на підході',tab:'subs'}
+];
+HOME_BLOCKS.splice(1,0,{id:'habits',n:'Щодня (звички з вогником)',tab:'today'});
+var HOME_IDS={};HOME_BLOCKS.forEach(function(b){HOME_IDS[b.id]=b});
+function sample(){
+  var t=T(), mon=addDays(t,-wd(t)-21);
+  return {v:1,rev:0,xp:0,days:{},occDone:{},
+    events:[
+      {id:uid(),type:'shift',title:'Робоча зміна',date:mon,start:'08:00',end:'16:00',repeat:[0,1,3],until:'',ex:1},
+      {id:uid(),type:'workout',title:'Ноги',date:mon,start:'18:00',end:'19:15',repeat:[2],until:'',ex:1},
+      {id:uid(),type:'workout',title:'Біг',date:mon,start:'10:00',end:'11:00',repeat:[5],until:'',ex:1},
+      {id:uid(),type:'other',title:'Лекції',date:mon,start:'10:00',end:'13:00',repeat:[4],until:'',ex:1}
+    ],
+    items:[
+      {id:uid(),kind:'task',title:'Англійська: тест за розділом 4',cat:'study',diff:'mid',due:addDays(t,3),steps:[],done:false,ex:1},
+      {id:uid(),kind:'task',title:'Проєкт: перша робоча версія',cat:'project',diff:'hard',due:addDays(t,9),steps:[{t:'Скласти план',d:false},{t:'Зробити основу',d:false},{t:'Перевірити та виправити',d:false}],done:false,ex:1},
+      {id:uid(),kind:'quest',title:'Закинути одяг у пральку',cat:'home',diff:'easy',due:t,steps:[],done:false,ex:1},
+      {id:uid(),kind:'quest',title:'Винести сміття',cat:'home',diff:'easy',due:addDays(t,1),steps:[],done:false,ex:1},
+      {id:uid(),kind:'quest',title:'Розібрати шафу',cat:'home',diff:'hard',due:addDays(t,5),steps:[{t:'Витягти все з полиць',d:false},{t:'Розкласти на три купи',d:false},{t:'Віддати або викинути зайве',d:false},{t:'Скласти назад',d:false}],done:false,ex:1},
+      {id:uid(),kind:'quest',title:'Генеральне прибирання кімнати',cat:'home',diff:'boss',due:addDays(t,10),steps:[],done:false,ex:1}
+    ],
+    places:[
+      {id:uid(),name:'Спортзал',note:'Приклад: впиши справжні години',h:[['07:00','22:00'],['07:00','22:00'],['07:00','22:00'],['07:00','22:00'],['07:00','21:00'],['09:00','20:00'],['09:00','18:00']],ex:1},
+      {id:uid(),name:'Бібліотека',note:'Приклад: впиши справжні години',h:[['09:00','19:00'],['09:00','19:00'],['09:00','19:00'],['09:00','19:00'],['09:00','17:00'],['10:00','15:00'],null],ex:1},
+      {id:uid(),name:'Офіс в університеті',note:'Приклад: впиши справжні години',h:[['10:00','15:00'],['10:00','15:00'],['10:00','15:00'],['10:00','15:00'],['10:00','14:00'],null,null],ex:1}
+    ],
+    shop:[
+      {id:uid(),t:'Молоко',cat:'food',done:false,ex:1},
+      {id:uid(),t:'Яйця',cat:'food',done:false,ex:1},
+      {id:uid(),t:'Пральний порошок',cat:'home',done:false,ex:1},
+      {id:uid(),t:'Туалетний папір',cat:'home',done:false,ex:1}
+    ],
+    shopHist:{},inboxDone:{},xpDays:{},spent:0,buys:[],
+    habits:[{id:uid(),n:'Англійська',mins:20,days:[0,1,2,3,4,5,6]}],habitLog:{},
+    subs:[
+      {id:uid(),n:'Spotify',cost:23,cur:'zł',every:'month',next:addDays(t,6),remind:3,note:'',ex:1},
+      {id:uid(),n:'Хмара на телефоні',cost:12,cur:'zł',every:'month',next:addDays(t,19),remind:3,note:'',ex:1}
+    ],
+    rewards:[
+      {id:uid(),n:'Вечір серіалу без докорів',cost:150,ex:1},
+      {id:uid(),n:'Доставка замість готування',cost:400,ex:1},
+      {id:uid(),n:'Нові бігові кросівки',cost:3000,ex:1}
+    ],
+    cfg:defCfg(),
+    wlog:[
+      {id:uid(),date:addDays(t,-12),sport:'run',name:'Легкий біг',dist:8,dur:48,ex:1},
+      {id:uid(),date:addDays(t,-9),sport:'swim',name:'Басейн',laps:40,dist:1000,dur:26,ex:1},
+      {id:uid(),date:addDays(t,-6),sport:'run',name:'Довгий біг',dist:14,dur:82,ex:1},
+      {id:uid(),date:addDays(t,-4),sport:'bike',name:'Шосе',dist:35,dur:72,ex:1},
+      {id:uid(),date:addDays(t,-3),sport:'swim',name:'Басейн',laps:48,dist:1200,dur:30,ex:1},
+      {id:uid(),date:addDays(t,-2),sport:'gym',name:'Ноги',exs:[{n:'Присідання',sets:[{kg:65,r:8},{kg:65,r:8},{kg:65,r:6}]}],ex:1},
+      {id:uid(),date:addDays(t,-1),sport:'run',name:'Темповий',dist:10,dur:52,ex:1}
+    ]};
+}
+function defCfg(){
+  return {xp:true,pool:25,weekXp:300,goalReward:'',
+    nav:['deeds','training','shop'],
+    home:[{id:'rewards',on:true},{id:'habits',on:true},{id:'plan',on:true},{id:'urgent',on:true},{id:'week',on:true},{id:'goals',on:true},{id:'next',on:true},{id:'subs',on:true},{id:'shop',on:true}],
+    sportOn:{run:true,swim:true,bike:true,gym:true,other:false},
+    pace:{run:'',swim:'',bike:''},
+    goals:{run:25,swim:2500,bike:40,gym:1,other:0},
+    races:[{id:uid(),n:'Півмарафон',d:''},{id:uid(),n:'Триатлон',d:''}],
+    shopCats:[{id:'food',n:'Продукти'},{id:'home',n:'Побутове'},{id:'pharm',n:'Аптека'},{id:'other',n:'Інше'}]};
+}
+function loadLocal(){try{var r=localStorage.getItem(LS);return r?JSON.parse(r):null}catch(e){return null}}
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+function norm(s){
+  if(!s||!s.items)return s;
+  s.shop=s.shop||[];s.wlog=s.wlog||[];s.shopHist=s.shopHist||{};s.inboxDone=s.inboxDone||{};
+  s.occDone=s.occDone||{};s.days=s.days||{};s.places=s.places||[];s.events=s.events||[];
+  s.xpDays=s.xpDays||{};s.rewards=s.rewards||[];s.buys=s.buys||[];s.spent=Number(s.spent)||0;
+  s.subs=Array.isArray(s.subs)?s.subs:[];
+  if(!Array.isArray(s.habits))s.habits=[{id:uid(),n:'Англійська',mins:20,days:[0,1,2,3,4,5,6]}];
+  s.habitLog=s.habitLog&&typeof s.habitLog==='object'?s.habitLog:{};
+  s.plan=s.plan&&typeof s.plan==='object'?s.plan:{weeks:{}};
+  s.plan.weeks=s.plan.weeks&&typeof s.plan.weeks==='object'?s.plan.weeks:{};
+  var d=defCfg(),c=s.cfg||{};
+  c.xp=c.xp!==false;c.pool=Number(c.pool)>0?Number(c.pool):25;
+  c.goals=c.goals||d.goals;SPORT_KEYS.forEach(function(k){if(typeof c.goals[k]!=='number')c.goals[k]=d.goals[k]||0});
+  c.races=Array.isArray(c.races)?c.races:d.races;
+  if(typeof c.weekXp!=='number')c.weekXp=d.weekXp;
+  if(typeof c.goalReward!=='string')c.goalReward='';
+  c.nav=(Array.isArray(c.nav)?c.nav:d.nav).filter(function(k){return NAV_PICK.indexOf(k)>-1}).slice(0,3);
+  if(!c.nav.length)c.nav=d.nav.slice();
+  c.sportOn=c.sportOn||d.sportOn;SPORT_KEYS.forEach(function(k){if(typeof c.sportOn[k]!=='boolean')c.sportOn[k]=!!d.sportOn[k]});
+  c.pace=c.pace||{};['run','swim','bike'].forEach(function(k){if(typeof c.pace[k]!=='string')c.pace[k]=''});
+  var hb=Array.isArray(c.home)?c.home:[];
+  var seen={};hb=hb.filter(function(x){return x&&HOME_IDS[x.id]&&!seen[x.id]&&(seen[x.id]=1)});
+  d.home.forEach(function(x){if(!seen[x.id])hb.push({id:x.id,on:x.on})});
+  c.home=hb;
+  c.shopCats=(Array.isArray(c.shopCats)&&c.shopCats.length)?c.shopCats:d.shopCats;
+  s.cfg=c;
+  var ids={};c.shopCats.forEach(function(x){ids[x.id]=1});
+  s.shop.forEach(function(x){if(!x.cat||!ids[x.cat])x.cat=c.shopCats[c.shopCats.length-1].id});
+  s.wlog.forEach(function(w){if(!w.sport)w.sport=w.exs&&w.exs.length?'gym':'other';if(!w.exs)w.exs=[]});
+  return s;
+}
+var S=norm(loadLocal());
+if(!S||!S.items){S=norm(sample())}
+
+var ui={tab:'today',calY:0,calM:0,calSel:T(),qSort:'due',showDone:{task:false,quest:false},exSel:'',focusShop:false,sportSel:'',shopCat:'',deedCat:''};
+(function(){var d=new Date();ui.calY=d.getFullYear();ui.calM=d.getMonth();
+  var h=(location.hash||'').slice(1);if(h==='more'||SEC_ORDER.indexOf(h)>-1)ui.tab=h})();
+function rewardSheet(id){
+  var r=id?S.rewards.find(function(x){return x.id===id}):null;
+  openSheet('<h2>'+(r?'Змінити нагороду':'Нова нагорода')+'</h2>'+
+    '<label for="f-name">Що це</label><input id="f-name" type="text" maxlength="70" value="'+esc(r?r.n:'')+'" placeholder="Вечір серіалу, піца, вихідний без справ">'+
+    '<label for="f-cost">Ціна в XP</label><input id="f-cost" class="num" style="width:120px;text-align:left" type="number" min="1" max="100000" step="10" inputmode="numeric" value="'+(r?r.cost:100)+'">'+
+    '<p class="small muted" style="margin-top:6px">Орієнтир: легке завдання дає 10 XP, важке 80. Тиждень звичайних справ — десь 200–400.</p>'+
+    '<label for="f-note">Умова (необов’язково)</label><input id="f-note" type="text" maxlength="40" value="'+esc(r&&r.note?r.note:'')+'" placeholder="Напр. тільки у вихідні">'+
+    '<p class="err" id="err" role="alert"></p>'+
+    '<div class="actions">'+(r?'<button class="btn danger" id="f-del">Видалити</button>':'')+'<button class="btn" id="f-cancel">Скасувати</button><button class="btn primary" id="f-save">Зберегти</button></div>');
+  $('#f-cancel').addEventListener('click',closeSheet);
+  if(r)armDelete($('#f-del'),function(){
+    S.rewards=S.rewards.filter(function(x){return x.id!==r.id});
+    if(S.cfg.goalReward===r.id)S.cfg.goalReward='';
+    save();closeSheet();
+  });
+  $('#f-save').addEventListener('click',function(){
+    var n=$('#f-name').value.trim().slice(0,70),c=Math.round(Number($('#f-cost').value));
+    if(!n)return setErr('Впиши, що це за нагорода.');
+    if(!(c>=1&&c<=100000))return setErr('Ціна — від 1 до 100000 XP.');
+    if(r){r.n=n;r.cost=c;r.note=$('#f-note').value.trim().slice(0,40);r.ex=0}
+    else S.rewards.push({id:uid(),n:n,cost:c,note:$('#f-note').value.trim().slice(0,40)});
+    save();closeSheet();
+  });
+}
+
+/* ---------- persistence: this device, plus optional sync later ---------- */
+var saveTimer=null,sheetOpen=false,pendingRender=false,dirty=false,remote=null;
+function setSync(k){
+  var el=$('#sync');if(!el)return;
+  var txt={ok:'Синхронізовано',saving:'Зберігаю…',local:'Збережено на цьому пристрої'}[k]||'';
+  el.className='sync '+(k==='ok'?'ok':k==='saving'?'saving':'');
+  el.querySelector('span').textContent=txt;
+}
+function save(){
+  S.rev=(S.rev||0)+1;saveLocal();dirty=true;
+  setSync(remote?'saving':'local');
+  clearTimeout(saveTimer);saveTimer=setTimeout(flush,600);
+}
+function flush(){
+  if(!remote){dirty=false;setSync('local');return}
+  remote.put(S).then(function(){dirty=false;setSync('ok')},function(){setSync('local')});
+}
+function initDb(){setSync('local')}
+function rerender(){if(sheetOpen){pendingRender=true}else{render()}}
+
+/* ---------- applying records ---------- */
+var sx=function(v,n){return String(v==null?'':v).slice(0,n||100).trim()};
+var okD=function(s){return typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&!isNaN(parse(s))};
+var okT=function(s){return typeof s==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(s)};
+var numOf=function(v,max){var n=Number(v);return isFinite(n)&&n>0?Math.min(n,max||10000):0};
+function applyInbox(x,id){
+  if(!x||typeof x!=='object')return false;
+  if(x.type==='event'){
+    var e=x.ev||{},title=sx(e.title,80);
+    if(!title||!TYPES[e.type]||!okD(e.date)||!okT(e.start)||!okT(e.end))return false;
+    if(S.events.some(function(q){return q.id===id}))return false;
+    var rep=(Array.isArray(e.repeat)?e.repeat:[]).map(Number).filter(function(k){return k>=0&&k<=6});
+    S.events.push({id:id,type:e.type,title:title,date:e.date,start:e.start,end:e.end,repeat:rep,until:rep.length&&okD(e.until)?e.until:''});
+    return true;
+  }
+  if(x.type==='item'){
+    var it=x.it||{},tt=sx(it.title,100);
+    if(!tt||(it.kind!=='task'&&it.kind!=='quest'))return false;
+    if(S.items.some(function(q){return q.id===id}))return false;
+    var steps=(Array.isArray(it.steps)?it.steps:[]).slice(0,20).map(function(s){return sx(s,100)}).filter(Boolean).map(function(s){return {t:s,d:false}});
+    S.items.push({id:id,kind:it.kind,title:tt,cat:CATS[it.cat]?it.cat:(it.kind==='quest'?'home':'study'),diff:DIFF[it.diff]?it.diff:'mid',due:okD(it.due)?it.due:'',steps:steps,done:false,doneAt:null});
+    return true;
+  }
+  if(x.type==='place'){
+    var p=x.place||{},nm=sx(p.name,60);
+    if(!nm||!Array.isArray(p.h)||p.h.length!==7)return false;
+    var h=[];
+    for(var k=0;k<7;k++){
+      var r=p.h[k];
+      if(r==null)h.push(null);
+      else if(Array.isArray(r)&&okT(r[0])&&okT(r[1])&&toMin(r[1])>toMin(r[0]))h.push([r[0],r[1]]);
+      else return false;
+    }
+    var old=S.places.find(function(q){return q.name.toLowerCase()===nm.toLowerCase()});
+    if(old){old.h=h;if(p.note!=null)old.note=sx(p.note,100);old.ex=0;return true}
+    S.places.push({id:id,name:nm,note:sx(p.note,100),h:h});
+    return true;
+  }
+  if(x.type==='shop'){
+    var n=0,cats={};S.cfg.shopCats.forEach(function(c){cats[c.id]=1});
+    (Array.isArray(x.items)?x.items:[]).slice(0,50).forEach(function(s,k){
+      var t=sx(typeof s==='string'?s:(s&&s.t),80);if(!t)return;
+      if(S.shop.some(function(q){return !q.done&&q.t.toLowerCase()===t.toLowerCase()}))return;
+      var c=s&&s.cat&&cats[s.cat]?s.cat:guessCat(t);
+      S.shop.push({id:id+'-'+k,t:t,cat:c,done:false});n++;
+    });
+    return n>0;
+  }
+  if(x.type==='wlog'){
+    var w=x.w||{};
+    if(!okD(w.date)||S.wlog.some(function(q){return q.id===id}))return false;
+    var sp=SPORTS[w.sport]?w.sport:'gym';
+    var o={id:id,date:w.date,sport:sp,name:sx(w.name,60)||SPORTS[sp].n,exs:[]};
+    if(sp==='gym'||sp==='other'){
+      o.exs=(Array.isArray(w.exs)?w.exs:[]).slice(0,30).map(function(e2){
+        return {n:sx(e2&&e2.n,60),sets:(Array.isArray(e2&&e2.sets)?e2.sets:[]).slice(0,30).map(function(s){return {kg:numOf(s&&s.kg,1000),r:numOf(s&&s.r,1000)}})};
+      }).filter(function(e2){return e2.n&&e2.sets.length});
+      o.dur=numOf(w.dur,1440);
+      if(!o.exs.length&&!o.dur)return false;
+    }else{
+      o.dur=numOf(w.dur,1440);
+      if(sp==='swim'){
+        o.laps=numOf(w.laps,2000);
+        o.dist=o.laps?o.laps*S.cfg.pool:numOf(w.dist,100000);
+      }else o.dist=numOf(w.dist,1000);
+      if(!o.dist&&!o.dur)return false;
+    }
+    S.wlog.push(o);
+    return true;
+  }
+  if(x.type==='events'){
+    var list=Array.isArray(x.list)?x.list:[],src=sx(x.src,20),ne=0;
+    if(src&&okD(x.from)&&okD(x.to)){
+      S.events=S.events.filter(function(q){return !(q.src===src&&q.date>=x.from&&q.date<=x.to)});
+    }
+    list.slice(0,400).forEach(function(e2,k){
+      if(!e2||!TYPES[e2.type]||!okD(e2.date)||!okT(e2.start)||!okT(e2.end))return;
+      var ti=sx(e2.title,80);if(!ti)return;
+      if(S.events.some(function(q){return q.date===e2.date&&q.start===e2.start&&q.title===ti}))return;
+      S.events.push({id:id+'-'+k,type:e2.type,title:ti,date:e2.date,start:e2.start,end:e2.end,repeat:[],until:'',src:src,note:sx(e2.note,80)});
+      ne++;
+    });
+    return ne>0;
+  }
+  if(x.type==='habit'){
+    var hb=x.habit||{},hn=sx(hb.n||hb.name,60);
+    if(!hn||S.habits.some(function(q){return q.id===id||q.n.toLowerCase()===hn.toLowerCase()}))return false;
+    var dy=(Array.isArray(hb.days)?hb.days:[0,1,2,3,4,5,6]).map(Number).filter(function(k){return k>=0&&k<=6});
+    S.habits.push({id:id,n:hn,mins:numOf(hb.mins,600),days:dy.length?dy:[0,1,2,3,4,5,6]});
+    return true;
+  }
+  if(x.type==='sub'){
+    var sb2=x.sub||{},sn=sx(sb2.n||sb2.name,60);
+    if(!sn||!okD(sb2.next)||S.subs.some(function(q){return q.id===id}))return false;
+    S.subs.push({id:id,n:sn,cost:numOf(sb2.cost,100000)||'',cur:sx(sb2.cur,6)||'zł',
+      every:PERIODS[sb2.every]?sb2.every:'month',next:sb2.next,
+      remind:typeof sb2.remind==='number'?Math.min(60,Math.max(0,Math.round(sb2.remind))):3,note:sx(sb2.note,60)});
+    return true;
+  }
+  if(x.type==='plan'){
+    var ws=Array.isArray(x.weeks)?x.weeks:[],np=0;
+    ws.slice(0,80).forEach(function(q){
+      if(!q||!okD(q.w))return;
+      var o={};
+      SPORT_KEYS.forEach(function(k){var val=numOf(q[k],100000);if(val)o[k]=val});
+      if(q.note)o.note=sx(q.note,160);
+      if(Object.keys(o).length){S.plan.weeks[weekStart(q.w)]=o;np++}
+    });
+    return np>0;
+  }
+  if(x.type==='race'){
+    var r=x.race||{},rn=sx(r.n||r.name,60);
+    if(!rn||S.cfg.races.some(function(q){return q.id===id}))return false;
+    S.cfg.races.push({id:id,n:rn,d:okD(r.d||r.date)?(r.d||r.date):''});
+    return true;
+  }
+  return false;
+}
+function applyRecords(list){
+  var n=0;
+  (Array.isArray(list)?list:[list]).slice(0,120).forEach(function(r,k){
+    try{if(applyInbox(r,'rec-'+Date.now().toString(36)+'-'+k))n++}catch(e){}
+  });
+  return n;
+}
+
+/* ---------- domain helpers ---------- */
+function eventsOn(d){
+  var w=wd(d);
+  return S.events.filter(function(e){
+    return e.repeat&&e.repeat.length?(e.repeat.indexOf(w)>-1&&d>=e.date&&(!e.until||d<=e.until)):e.date===d;
+  }).map(function(e){return {e:e,key:e.id+'|'+d}}).sort(function(a,b){return a.e.start.localeCompare(b.e.start)});
+}
+function dueOn(d){return S.items.filter(function(i){return !i.done&&i.due===d})}
+var PERIODS={week:{n:'щотижня',d:7},month:{n:'щомісяця',d:0},year:{n:'щороку',d:0}};
+function subsOn(d){return S.subs.filter(function(x){return x.next===d})}
+function rollDate(date,every){
+  var dd=parse(date);
+  if(every==='week')return addDays(date,7);
+  if(every==='year'){
+    var y2=dd.getFullYear()+1,m2=dd.getMonth(),d2=dd.getDate();
+    return ymd(new Date(y2,m2,Math.min(d2,new Date(y2,m2+1,0).getDate())));
+  }
+  var day=dd.getDate();dd.setDate(1);dd.setMonth(dd.getMonth()+1);
+  var last=new Date(dd.getFullYear(),dd.getMonth()+1,0).getDate();
+  dd.setDate(Math.min(day,last));return ymd(dd);
+}
+function subSoon(x){var n=diffDays(x.next,T());return n<=(typeof x.remind==='number'?x.remind:3)}
+function subCost(x){return x.cost?((Math.round(x.cost*100)/100)+' '+(x.cur||'')).trim():''}
+function monthlyTotal(){
+  var v=0,cur='';
+  S.subs.forEach(function(x){
+    if(!x.cost)return;cur=cur||x.cur||'';
+    v+=x.every==='year'?x.cost/12:x.every==='week'?x.cost*4.33:x.cost;
+  });
+  return v?((Math.round(v*10)/10)+' '+cur).trim():'';
+}
+function freeWindows(d,from){
+  var lo=from==null?8*60:from,hi=22*60,busy=[];
+  eventsOn(d).forEach(function(x){
+    var s=toMin(x.e.start),e=toMin(x.e.end);if(e<=s)e=1440;busy.push([s,e]);
+  });
+  busy.sort(function(a,b){return a[0]-b[0]});
+  var out=[],cur=lo;
+  busy.forEach(function(b){
+    if(b[0]>cur&&b[0]-cur>=45)out.push([cur,Math.min(b[0],hi)]);
+    cur=Math.max(cur,b[1]);
+  });
+  if(hi-cur>=45)out.push([cur,hi]);
+  return out.filter(function(w){return w[1]-w[0]>=45&&w[0]<hi});
+}
+function durLabel(m){var h=Math.floor(m/60),r=m%60;return (h?h+' год':'')+(h&&r?' ':'')+(r?r+' хв':'')}
+var xpOf=function(i){return DIFF[i.diff||'mid'].xp};
+function lvl(xp){var L=Math.floor(Math.sqrt(xp/60))+1,base=60*(L-1)*(L-1),next=60*L*L;return {L:L,into:xp-base,need:next-base}}
+var lvlTitle=function(L){return LVL_TITLES[Math.min(L-1,LVL_TITLES.length-1)]};
+function streak(){var n=0,d=T();if(!(S.days[d]>0))d=addDays(d,-1);while(S.days[d]>0){n++;d=addDays(d,-1)}return n}
+function cmpItems(sort){
+  return function(a,b){
+    var da=a.due||'9999-99-99',db=b.due||'9999-99-99';
+    if(sort==='xp')return xpOf(b)-xpOf(a)||da.localeCompare(db);
+    if(sort==='quick')return xpOf(a)-xpOf(b)||da.localeCompare(db);
+    return da.localeCompare(db)||xpOf(b)-xpOf(a);
+  };
+}
+function duePill(due,done){
+  if(!due)return '<span class="pill">без дедлайну</span>';
+  if(done)return '<span class="pill">'+fmtDate(due)+'</span>';
+  var n=diffDays(due,T());
+  if(n<0)return '<span class="pill bad">прострочено на '+(-n)+' дн.</span>';
+  if(n===0)return '<span class="pill warn">сьогодні</span>';
+  if(n===1)return '<span class="pill warn">завтра</span>';
+  if(n<=7)return '<span class="pill accent">через '+n+' дн.</span>';
+  return '<span class="pill">'+fmtDate(due)+'</span>';
+}
+function placeStatus(p){
+  var now=new Date(),nm=now.getHours()*60+now.getMinutes(),w=(now.getDay()+6)%7,h=p.h[w];
+  if(h&&nm>=toMin(h[0])&&nm<toMin(h[1]))return {open:true,soon:toMin(h[1])-nm<=60,text:'Відкрито до '+h[1]};
+  if(h&&nm<toMin(h[0]))return {open:false,text:'Зачинено · відкриється о '+h[0]};
+  for(var k=1;k<=7;k++){var hh=p.h[(w+k)%7];if(hh)return {open:false,text:'Зачинено · '+(k===1?'завтра':WDS[(w+k)%7])+' о '+hh[0]}}
+  return {open:false,text:'Зачинено'};
+}
+
+/* ---------- actions ---------- */
+var toastTimer=null;
+function toast(msg){
+  var el=$('#toast');el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show')},2600);
+}
+function addXp(d,delta){
+  S.xp=Math.max(0,S.xp+delta);
+  S.xpDays[d]=Math.max(0,(S.xpDays[d]||0)+delta);
+}
+function award(delta,on){
+  var t=T();
+  addXp(t,delta);
+  S.days[t]=Math.max(0,(S.days[t]||0)+(on?1:-1));
+}
+function bal(){return S.xp-(S.spent||0)}
+function habDone(id,d){var m=S.habitLog[d];return !!(m&&m[id])}
+function habOn(h,d){return !h.days||!h.days.length||h.days.indexOf(wd(d))>-1}
+function habStreak(h){
+  var d=T(),n=0;
+  if(habOn(h,d)&&!habDone(h.id,d))d=addDays(d,-1);
+  for(var k=0;k<400;k++){
+    if(habOn(h,d)){if(habDone(h.id,d))n++;else break}
+    d=addDays(d,-1);
+  }
+  return n;
+}
+function habWeek(h){
+  var out=[],d=addDays(T(),-6);
+  for(var i=0;i<7;i++){out.push({d:d,on:habOn(h,d),done:habDone(h.id,d)});d=addDays(d,1)}
+  return out;
+}
+function toggleHab(id){
+  var t=T(),h=S.habits.find(function(x){return x.id===id});if(!h)return;
+  var m=S.habitLog[t]||(S.habitLog[t]={}),before=lvl(S.xp).L;
+  if(m[id]){delete m[id];addXp(t,-HABIT_XP);S.days[t]=Math.max(0,(S.days[t]||0)-1)}
+  else{
+    m[id]=1;addXp(t,HABIT_XP);S.days[t]=(S.days[t]||0)+1;
+    var st=habStreak(h),a=lvl(S.xp).L;
+    toast((S.cfg.xp?'+'+HABIT_XP+' XP · ':'')+(st>1?st+' '+pl(st,['день','дні','днів'])+' поспіль':'Зроблено')+(a>before?' · рівень '+a+'!':''));
+  }
+  save();render();
+}
+function weekXp(mon){var v=0;for(var i=0;i<7;i++)v+=S.xpDays[addDays(mon,i)]||0;return v}
+function weekStreak(){
+  var g=S.cfg.weekXp;if(!g)return 0;
+  var mon=weekStart(T()),n=0,k=weekXp(mon)>=g?0:1;
+  for(;k<200;k++){if(weekXp(addDays(mon,-7*k))>=g)n++;else break}
+  return n;
+}
+function goalReward(){return S.rewards.find(function(r){return r.id===S.cfg.goalReward})}
+function setDone(id,on,silent){
+  var i=S.items.find(function(x){return x.id===id});
+  if(!i||i.done===on)return;
+  var xp=xpOf(i),before=lvl(S.xp).L;
+  if(on){
+    i.done=true;i.doneAt=T();award(xp,true);
+    var after=lvl(S.xp).L;
+    toast(S.cfg.xp?('+'+xp+' XP · виконано'+(after>before?' · рівень '+after+'!':'')):'Виконано');
+  }else{
+    var dt=i.doneAt||T();i.done=false;i.doneAt=null;
+    addXp(dt,-xp);S.days[dt]=Math.max(0,(S.days[dt]||0)-1);
+  }
+  if(!silent){save();render()}
+}
+function toggleStep(id,idx){
+  var i=S.items.find(function(x){return x.id===id});if(!i||!i.steps[idx])return;
+  i.steps[idx].d=!i.steps[idx].d;
+  var all=i.steps.length>0&&i.steps.every(function(s){return s.d});
+  if(all&&!i.done)setDone(id,true,true);
+  else if(!all&&i.done)setDone(id,false,true);
+  save();render();
+}
+function toggleOcc(key){
+  var before=lvl(S.xp).L;
+  if(S.occDone[key]){delete S.occDone[key];var t=T();addXp(t,-WORKOUT_XP);S.days[t]=Math.max(0,(S.days[t]||0)-1)}
+  else{S.occDone[key]=1;award(WORKOUT_XP,true);var a=lvl(S.xp).L;toast(S.cfg.xp?('+'+WORKOUT_XP+' XP · тренування зроблено'+(a>before?' · рівень '+a+'!':'')):'Тренування зроблено')}
+  save();render();
+}
+
+/* ---------- views ---------- */
+function exBanner(){
+  if(ui.tab==='prefs')return '';
+  var any=S.events.some(function(e){return e.ex})||S.items.some(function(i){return i.ex})||S.places.some(function(p){return p.ex})||S.shop.some(function(s){return s.ex})||S.wlog.some(function(w){return w.ex})||S.rewards.some(function(r){return r.ex})||S.subs.some(function(x){return x.ex});
+  if(!any)return '';
+  return '<div class="banner"><span>Тут приклади, щоб було видно, як усе виглядає. Додай свої або прибери приклади.</span><button class="btn sm" data-act="clear-ex">Прибрати приклади</button></div>';
+}
+function evRow(x,withDate){
+  var e=x.e,w=e.type==='workout';
+  var done=!!S.occDone[x.key];
+  return '<div class="row'+(done?' done':'')+'"><span class="bar" style="background:var(--c-'+e.type+')"></span>'+
+    '<div class="rb" role="button" tabindex="0" data-act="edit-event" data-id="'+e.id+'"><div class="ttl">'+esc(e.title)+'</div>'+
+    '<div class="meta"><span class="mono">'+e.start+'–'+e.end+'</span><span class="pill">'+TYPES[e.type]+(e.repeat&&e.repeat.length?' · щотижня':'')+'</span>'+(e.note?'<span class="pill">'+esc(e.note)+'</span>':'')+'</div></div>'+
+    (w?'<button class="chk'+(done?' on':'')+'" data-act="occ" data-key="'+x.key+'" aria-pressed="'+done+'" aria-label="Тренування зроблено"></button>':'')+'</div>';
+}
+function itemRow(i,opts){
+  opts=opts||{};
+  var steps='';
+  if(i.steps&&i.steps.length){
+    var dn=i.steps.filter(function(s){return s.d}).length;
+    if(opts.inlineSteps){
+      steps='<ul class="steps">'+i.steps.map(function(s,k){
+        return '<li class="'+(s.d?'d':'')+'"><button class="chk sm'+(s.d?' on':'')+'" data-act="step" data-id="'+i.id+'" data-i="'+k+'" aria-pressed="'+s.d+'" aria-label="Крок: '+esc(s.t)+'"></button><span>'+esc(s.t)+'</span></li>';
+      }).join('')+'</ul><div class="prog" aria-hidden="true"><i style="width:'+Math.round(dn/i.steps.length*100)+'%"></i></div>';
+    }
+  }
+  var stepsPill=i.steps&&i.steps.length&&!opts.inlineSteps?'<span class="pill">кроки '+i.steps.filter(function(s){return s.d}).length+'/'+i.steps.length+'</span>':'';
+  return '<div class="row'+(i.done?' done':'')+'">'+
+    '<button class="chk'+(i.done?' on':'')+'" data-act="toggle" data-id="'+i.id+'" aria-pressed="'+i.done+'" aria-label="Виконано: '+esc(i.title)+'"></button>'+
+    '<div class="rb"><div role="button" tabindex="0" data-act="edit-item" data-id="'+i.id+'"><div class="ttl">'+esc(i.title)+'</div>'+
+    '<div class="meta">'+duePill(i.due,i.done)+'<span class="pill '+DIFF_CLS[i.diff]+'">'+DIFF[i.diff].n+(S.cfg.xp?' · +'+xpOf(i)+' XP':'')+'</span><span class="pill">'+CATS[i.cat]+'</span>'+stepsPill+'</div></div>'+steps+'</div></div>';
+}
+
+function headBtn(title,tab){
+  return '<button class="h2b" data-act="tab" data-tab="'+tab+'">'+title+'<span class="ch" aria-hidden="true">›</span></button>';
+}
+function weekStrip(){
+  var t=T(),mon=addDays(t,-wd(t)),wk='',wTotal=0,wDone=0;
+  for(var i=0;i<7;i++){
+    var d=addDays(mon,i),es=eventsOn(d),du=dueOn(d),types={};
+    es.forEach(function(x){types[x.e.type]=1;if(x.e.type==='workout'){wTotal++;if(S.occDone[x.key])wDone++}});
+    var dots=['shift','study','workout','other'].filter(function(k){return types[k]}).map(function(k){return '<span class="dot '+k+'"></span>'}).join('')+(du.length?'<span class="dot deadline"></span>':'');
+    wk+='<button class="wday'+(d===t?' today':'')+'" data-act="goto-day" data-date="'+d+'" aria-label="'+fmtLong(d)+'"><span>'+WDS[i]+'</span><b>'+parse(d).getDate()+'</b><span class="dots">'+dots+'</span></button>';
+  }
+  return {html:wk,total:wTotal,done:wDone};
+}
+function homeBlock(id){
+  var t=T();
+  if(id==='rewards'){
+    if(!S.cfg.xp)return '';
+    var L=lvl(S.xp),st=streak(),filled=Math.round(L.into/L.need*20),segs='';
+    for(var k=0;k<20;k++)segs+='<b class="'+(k<filled?'on':'')+'"></b>';
+    var wc=weekCard(),gc=goalCard();
+    return '<section class="card">'+headBtn('Нагороди · '+bal()+' XP у банку','rewards')+
+      '<div class="hero" style="margin-top:4px"><div class="lv"><span class="lv-n">'+L.L+'</span><span class="lv-t">'+lvlTitle(L.L)+'</span></div>'+
+      '<div class="hero-r"><div class="segs" role="img" aria-label="Досвід: '+L.into+' з '+L.need+'">'+segs+'</div>'+
+      '<p class="small muted">'+L.into+' з '+L.need+' XP до рівня '+(L.L+1)+(st>0?' · серія '+st+' дн.':'')+'</p></div></div>'+
+      (wc||gc?'<div style="margin-top:4px">'+wc+gc+'</div>':'')+'</section>';
+  }
+  if(id==='habits'){
+    var hs=S.habits;
+    return '<section class="card">'+headBtn('Щодня','today')+
+      (hs.length?hs.map(function(h){
+        var on=habOn(h,t),done=habDone(h.id,t),st=habStreak(h);
+        return '<div class="hrow2"><button class="chk'+(done?' on':'')+'" data-act="habit" data-id="'+h.id+'" aria-pressed="'+done+'" aria-label="'+esc(h.n)+' зроблено"></button>'+
+          '<div class="hbody" role="button" tabindex="0" data-act="edit-habit" data-id="'+h.id+'"><div class="hname">'+esc(h.n)+(h.mins?' <span class="muted" style="font-weight:400">· '+h.mins+' хв</span>':'')+(on?'':' <span class="pill">сьогодні не треба</span>')+'</div>'+
+          '<div class="hdots" role="img" aria-label="Останні 7 днів">'+habWeek(h).map(function(x){return '<i class="'+(x.done?'done':(x.on?'':'off'))+'"></i>'}).join('')+'</div></div>'+
+          (st>0?'<span class="flame"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.5 3-1.5 4.5-3 6.5C7.3 10.7 6 12.6 6 15a6 6 0 0012 0c0-2.6-1.3-4.3-2.5-6-.6 1-1.3 1.6-2.2 1.9.6-2.6.3-5.6-1.3-8.9z"/></svg>'+st+'</span>':'')+
+          '</div>';
+      }).join(''):'<p class="empty">Звичок немає. Додай те, що хочеш робити щодня.</p>')+
+      '<div class="toolbar" style="margin-top:10px"><button class="btn sm" data-act="add-habit">+ Звичка</button></div></section>';
+  }
+  if(id==='plan'){
+    var evs=eventsOn(t),now=new Date(),nowM=now.getHours()*60+now.getMinutes();
+    var free=freeWindows(t,Math.max(8*60,Math.ceil(nowM/15)*15));
+    return '<section class="card">'+headBtn('Сьогодні в плані','calendar')+
+      (evs.length?evs.map(function(x){return evRow(x)}).join(''):'<p class="empty">На сьогодні подій немає.</p>')+
+      '<div class="toolbar" style="margin-top:8px"><button class="btn sm" data-act="add-event" data-date="'+t+'">+ Подія</button></div>'+
+      (free.length?'<div class="sec" style="margin-top:12px">Вільні вікна далі сьогодні</div><div class="free">'+free.map(function(w){return '<span class="pill good mono">'+fmtMin(w[0])+'–'+fmtMin(w[1])+' · '+durLabel(w[1]-w[0])+'</span>'}).join('')+'</div>':'')+'</section>';
+  }
+  if(id==='urgent'){
+    var late=S.items.filter(function(i){return !i.done&&i.due&&i.due<=t}).sort(cmpItems('due'));
+    return '<section class="card">'+headBtn('Горить і на сьогодні','deeds')+
+      (late.length?late.map(function(i){return itemRow(i,{inlineSteps:true})}).join(''):'<p class="empty">Нічого не горить. Можна взятися за щось наперед.</p>')+'</section>';
+  }
+  if(id==='week'){
+    var w=weekStrip();
+    return '<section class="card">'+headBtn('Цей тиждень'+(w.total?' · тренувань '+w.done+' з '+w.total:''),'calendar')+
+      '<div class="week">'+w.html+'</div>'+
+      '<div class="legend"><span><i class="dot shift"></i>зміна</span><span><i class="dot study"></i>пара</span><span><i class="dot workout"></i>тренування</span><span><i class="dot other"></i>інше</span><span><i class="dot deadline"></i>дедлайн</span></div></section>';
+  }
+  if(id==='goals'){
+    var gr=planRows()||goalRows();if(!gr)return '';
+    return '<section class="card">'+headBtn(planWeek()?'План тижня':'Цілі тижня','training')+gr+'</section>';
+  }
+  if(id==='next'){
+    var up=S.items.filter(function(i){return !i.done&&(!i.due||i.due>t)}).sort(cmpItems('due')).slice(0,5);
+    return '<section class="card">'+headBtn('Найближчі справи','deeds')+
+      (up.length?up.map(function(i){return itemRow(i,{})}).join(''):'<p class="empty">Попереду нічого не заплановано.</p>')+'</section>';
+  }
+  if(id==='subs'){
+    var soon=S.subs.filter(subSoon).sort(function(a,b){return a.next.localeCompare(b.next)});
+    if(!S.subs.length)return '';
+    return '<section class="card">'+headBtn('Підписки на підході','subs')+
+      (soon.length?soon.map(subRow).join(''):'<p class="empty">Найближчими днями нічого не списується.</p>')+'</section>';
+  }
+  if(id==='shop'){
+    var buy=S.shop.filter(function(x){return !x.done});
+    return '<section class="card">'+headBtn('Купити'+(buy.length?' · '+buy.length:''),'shop')+
+      (buy.length?'<div class="free">'+buy.slice(0,10).map(function(x){return '<span class="pill">'+esc(x.t)+'</span>'}).join('')+(buy.length>10?'<span class="pill">ще '+(buy.length-10)+'</span>':'')+'</div>':'<p class="empty">Список покупок порожній.</p>')+'</section>';
+  }
+  return '';
+}
+function viewToday(){
+  var t=T(),h=new Date().getHours();
+  var hello=h<5?'Доброї ночі':h<12?'Доброго ранку':h<18?'Добрий день':'Добрий вечір';
+  var html='<div class="stack">'+exBanner()+
+    '<div class="page-h" style="margin:0"><h1>'+hello+'. '+fmtLong(t)+'</h1></div><div class="grid">';
+  html+=S.cfg.home.filter(function(b){return b.on}).map(function(b){return homeBlock(b.id)}).join('');
+  return html+'</div></div>';
+}
+
+function viewCalendar(){
+  var y=ui.calY,m=ui.calM,first=ymd(new Date(y,m,1)),off=wd(first),dim=new Date(y,m+1,0).getDate();
+  var cells=Math.ceil((off+dim)/7)*7,t=T(),grid='';
+  WDS.forEach(function(n){grid+='<div class="hd">'+n+'</div>'});
+  for(var k=0;k<cells;k++){
+    var d=addDays(first,k-off),inM=parse(d).getMonth()===m;
+    var es=eventsOn(d),du=dueOn(d),sb=subsOn(d),types={};
+    es.forEach(function(x){types[x.e.type]=1});
+    var dots=['shift','study','workout','other'].filter(function(a){return types[a]}).map(function(a){return '<span class="dot '+a+'"></span>'}).join('')+(du.length?'<span class="dot deadline"></span>':'')+(sb.length?'<span class="dot sub"></span>':'');
+    grid+='<button class="day'+(inM?'':' out')+(d===t?' today':'')+(d===ui.calSel?' sel':'')+'" data-act="sel-day" data-date="'+d+'" aria-label="'+fmtLong(d)+'"><span class="n">'+parse(d).getDate()+'</span><span class="dots">'+dots+'</span></button>';
+  }
+  var sel=ui.calSel,es=eventsOn(sel),du=dueOn(sel),sb=subsOn(sel);
+  var free=freeWindows(sel);
+  var html='<div class="stack">'+exBanner()+'<div class="grid"><section class="card">'+
+    '<div class="cal-h"><button class="btn sm" data-act="cal-prev" aria-label="Попередній місяць">←</button><h2>'+MONTHS[m]+' '+y+'</h2><button class="btn sm" data-act="cal-next" aria-label="Наступний місяць">→</button></div>'+
+    '<div class="cal">'+grid+'</div>'+
+    '<div class="legend"><span><i class="dot shift"></i>зміна</span><span><i class="dot study"></i>пара</span><span><i class="dot workout"></i>тренування</span><span><i class="dot other"></i>інше</span><span><i class="dot deadline"></i>дедлайн</span><span><i class="dot sub"></i>списання</span></div>'+
+    '<div class="toolbar" style="margin-top:10px"><button class="btn sm" data-act="cal-today">Сьогодні</button></div></section>'+
+    '<section class="card"><h2>'+fmtLong(sel)+'</h2>'+
+    (es.length?es.map(function(x){return evRow(x)}).join(''):'<p class="empty">Подій немає.</p>')+
+    (du.length?'<div class="sec">Дедлайни цього дня</div>'+du.map(function(i){return itemRow(i,{})}).join(''):'')+
+    (sb.length?'<div class="sec">Списання</div>'+sb.map(subRow).join(''):'')+
+    '<div class="sec">Вільні вікна (08:00–22:00)</div>'+
+    (free.length?'<div class="free">'+free.map(function(w){return '<span class="pill good mono">'+fmtMin(w[0])+'–'+fmtMin(w[1])+' · '+durLabel(w[1]-w[0])+'</span>'}).join('')+'</div>':'<p class="empty" style="padding:4px 0">Вільних вікон від 45 хвилин немає.</p>')+
+    '<div class="toolbar" style="margin-top:14px"><button class="btn primary sm" data-act="add-event" data-date="'+sel+'">+ Подія</button><button class="btn sm" data-act="add-item" data-kind="task" data-date="'+sel+'">+ Дедлайн на цей день</button></div></section></div></div>';
+  return html;
+}
+
+function viewDeeds(){
+  var t=T(),open=S.items.filter(function(i){return !i.done}),done=S.items.filter(function(i){return i.done});
+  var cats=Object.keys(CATS).filter(function(c){return open.some(function(i){return i.cat===c})});
+  var filt=ui.deedCat&&cats.indexOf(ui.deedCat)>-1?ui.deedCat:'';
+  var list=open.filter(function(i){return !filt||i.cat===filt}).sort(cmpItems(ui.qSort));
+  var html=exBanner()+'<div class="page-h"><h1>Справи</h1><div class="toolbar">'+
+    '<label class="small muted" for="qsort">Сортувати</label><select id="qsort" class="btn" data-act="qsort" style="padding-right:8px">'+
+    [['due','за дедлайном'],['xp','найбільші спершу'],['quick','легкі спершу']].map(function(o){return '<option value="'+o[0]+'"'+(ui.qSort===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+
+    '</select><button class="btn primary" data-act="add-item">+ Справа</button></div></div>';
+  if(cats.length>1){
+    html+='<div class="chips">'+[{id:'',n:'Усі · '+open.length}].concat(cats.map(function(c){
+      return {id:c,n:CATS[c]+' · '+open.filter(function(i){return i.cat===c}).length};
+    })).map(function(c){
+      return '<button class="chip" data-act="deed-filter" data-c="'+c.id+'"'+(filt===c.id?' style="border-color:var(--accent);color:var(--accent)"':'')+'>'+esc(c.n)+'</button>';
+    }).join('')+'</div>';
+  }
+  if(!list.length){
+    html+='<section class="card" style="margin-top:12px"><p class="empty">'+(filt?'У цій категорії порожньо.':'Справ немає. Додай завдання з дедлайном або побутову дрібницю.')+'</p></section>';
+  }else if(ui.qSort==='due'){
+    var groups=[
+      ['Прострочено',function(i){return i.due&&i.due<t}],
+      ['Сьогодні і завтра',function(i){return i.due&&i.due>=t&&diffDays(i.due,t)<=1}],
+      ['Цей тиждень',function(i){return i.due&&diffDays(i.due,t)>1&&diffDays(i.due,t)<=7}],
+      ['Пізніше',function(i){return i.due&&diffDays(i.due,t)>7}],
+      ['Без дедлайну',function(i){return !i.due}]
+    ];
+    groups.forEach(function(g){
+      var arr=list.filter(g[1]);
+      if(arr.length)html+='<div class="sec">'+g[0]+' · '+arr.length+'</div><section class="card">'+arr.map(function(i){return itemRow(i,{inlineSteps:true})}).join('')+'</section>';
+    });
+  }else{
+    html+='<section class="card" style="margin-top:12px">'+list.map(function(i){return itemRow(i,{inlineSteps:true})}).join('')+'</section>';
+  }
+  if(done.length){
+    var dl=done.sort(function(a,b){return (b.doneAt||'').localeCompare(a.doneAt||'')});
+    html+='<div class="sec"><button class="btn sm" data-act="toggle-done" data-kind="task">'+(ui.showDone.task?'Сховати виконані':'Показати виконані ('+dl.length+')')+'</button></div>';
+    if(ui.showDone.task)html+='<section class="card">'+dl.slice(0,40).map(function(i){return itemRow(i,{})}).join('')+'</section>';
+  }
+  return html;
+}
+function viewMore(){
+  var t=T(),open=S.items.filter(function(i){return !i.done}).length;
+  var buy=S.shop.filter(function(x){return !x.done}).length;
+  var mon=weekStart(T());
+  var info={
+    calendar:eventsOn(t).length?eventsOn(t).length+' '+pl(eventsOn(t).length,['подія','події','подій'])+' сьогодні':'подій сьогодні немає',
+    deeds:open?open+' '+pl(open,['активна','активні','активних']):'усе закрито',
+    training:(function(n){return n+' '+pl(n,['тренування','тренування','тренувань'])+' за тиждень'})(S.wlog.filter(function(w){return w.date>=mon}).length),
+    rewards:bal()+' XP у банку',
+    shop:buy?buy+' у списку':'список порожній',
+    hours:S.places.length+' '+pl(S.places.length,['місце','місця','місць']),
+    subs:(function(){var n=S.subs.filter(subSoon).length;return S.subs.length?(n?n+' скоро списується':monthlyTotal()?monthlyTotal()+' на місяць':S.subs.length+' у списку'):'нічого не додано'})(),
+    prefs:'усе під себе'
+  };
+  var keys=allSecs().filter(function(k){return k!=='today'}).concat(['prefs']);
+  return '<div class="page-h"><h1>Розділи</h1></div><div class="menu">'+keys.map(function(k){
+    return '<button class="mtile" data-act="tab" data-tab="'+k+'"><svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS[k==='prefs'?'settings':k]+'</svg><b>'+SECTIONS[k].n+'</b><span>'+esc(info[k]||SECTIONS[k].d)+'</span></button>';
+  }).join('')+'</div>';
+}
+
+function catName(id){var c=S.cfg.shopCats.find(function(x){return x.id===id});return c?c.n:'Інше'}
+function nextCat(id){
+  var ks=S.cfg.shopCats,i=ks.findIndex(function(x){return x.id===id});
+  return ks[(i+1)%ks.length].id;
+}
+function shopRow(x){
+  return '<div class="shrow'+(x.done?' done':'')+'">'+
+    '<button class="sh-btn" data-act="shop-toggle" data-id="'+x.id+'" aria-pressed="'+x.done+'"><span class="chk'+(x.done?' on':'')+'"></span><span class="ttl">'+esc(x.t)+'</span></button>'+
+    '<button class="cbtn" data-act="shop-cat" data-id="'+x.id+'" aria-label="Категорія: '+esc(catName(x.cat))+'. Натисни, щоб змінити">'+esc(catName(x.cat))+'</button>'+
+    '<button class="x" data-act="shop-del" data-id="'+x.id+'" aria-label="Прибрати '+esc(x.t)+'">×</button></div>';
+}
+function viewShop(){
+  var open=S.shop.filter(function(x){return !x.done}),done=S.shop.filter(function(x){return x.done});
+  var inList={};open.forEach(function(x){inList[x.t.toLowerCase()]=1});
+  var often=Object.keys(S.shopHist).map(function(k){return S.shopHist[k]})
+    .filter(function(x){return x.n>=2&&!inList[x.t.toLowerCase()]}).sort(function(a,b){return b.n-a.n}).slice(0,8);
+  var cats=S.cfg.shopCats.filter(function(c){return open.some(function(x){return x.cat===c.id})});
+  var filt=ui.shopCat&&cats.some(function(c){return c.id===ui.shopCat})?ui.shopCat:'';
+  var html=exBanner()+'<div class="page-h"><h1>Список покупок</h1>'+(done.length?'<button class="btn sm" data-act="shop-clear">Прибрати куплені ('+done.length+')</button>':'')+'</div>';
+  html+='<section class="card"><form class="addrow" data-act="shop-add"><input id="shop-in" type="text" maxlength="80" placeholder="Додати до списку" autocomplete="off" enterkeyhint="done"><button class="btn primary" type="submit">Додати</button></form>'+
+    '<p class="small muted" style="margin-top:8px">Категорія визначається сама. Якщо не вгадала, натисни на неї в рядку.</p>'+
+    (often.length?'<div class="chips">'+often.map(function(x){return '<button class="chip" data-act="shop-quick" data-t="'+esc(x.t)+'">+ '+esc(x.t)+'</button>'}).join('')+'</div><p class="small muted">Те, що ти береш найчастіше.</p>':'')+'</section>';
+  if(cats.length>1){
+    html+='<div class="chips">'+[{id:'',n:'Усе · '+open.length}].concat(cats.map(function(c){
+      return {id:c.id,n:c.n+' · '+open.filter(function(x){return x.cat===c.id}).length};
+    })).map(function(c){
+      return '<button class="chip" data-act="shop-filter" data-c="'+c.id+'"'+(filt===c.id?' style="border-color:var(--accent);color:var(--accent)"':'')+'>'+esc(c.n)+'</button>';
+    }).join('')+'</div>';
+  }
+  if(open.length){
+    var show=cats.filter(function(c){return !filt||c.id===filt});
+    html+=show.map(function(c){
+      var list=open.filter(function(x){return x.cat===c.id});
+      return '<div class="catg">'+esc(c.n)+' · '+list.length+'</div><section class="card">'+list.map(shopRow).join('')+'</section>';
+    }).join('');
+  }else{
+    html+='<section class="card" style="margin-top:12px"><p class="empty">Список порожній. Запиши, що закінчилося, і в магазині просто відмічай куплене.</p></section>';
+  }
+  if(done.length)html+='<div class="catg">Куплено</div><section class="card">'+done.map(shopRow).join('')+'</section>';
+  return html;
+}
+
+function weekStart(d){return addDays(d,-wd(d))}
+function fmtPace(m){var a=Math.floor(m),b=Math.round((m-a)*60);if(b===60){a++;b=0}return a+':'+pad(b)}
+function paceOf(w){
+  if(!w.dur||!w.dist)return '';
+  if(w.sport==='run')return fmtPace(w.dur/w.dist)+' /км';
+  if(w.sport==='swim')return fmtPace(w.dur/(w.dist/100))+' /100 м';
+  if(w.sport==='bike')return (Math.round(w.dist/(w.dur/60)*10)/10)+' км/год';
+  return '';
+}
+function distOf(w){
+  if(!CARDIO[w.sport]||!w.dist)return '';
+  if(w.sport==='swim')return Math.round(w.dist)+' м'+(w.laps?' · '+w.laps+' '+pl(w.laps,['басейн','басейни','басейнів']):'');
+  return (Math.round(w.dist*10)/10)+' км';
+}
+function amount(w){return CARDIO[w.sport]?(w.dist||0):1}
+function sumRange(sport,from,to){
+  var v=0;S.wlog.forEach(function(w){if(w.sport===sport&&w.date>=from&&w.date<=to)v+=amount(w)});return v;
+}
+function fmtAmount(sport,v){
+  if(sport==='swim')return Math.round(v)+' м';
+  if(CARDIO[sport])return (Math.round(v*10)/10)+' км';
+  return Math.round(v)+'';
+}
+function planWeek(d){
+  var w=S.plan.weeks[weekStart(d||T())];
+  return w&&typeof w==='object'?w:null;
+}
+function weekPace(k,mon){
+  var dist=0,dur=0;
+  S.wlog.forEach(function(w){if(w.sport===k&&w.date>=mon&&w.date<=addDays(mon,6)){dist+=w.dist||0;dur+=w.dur||0}});
+  if(!dist||!dur)return '';
+  if(k==='run')return fmtPace(dur/dist)+' /км';
+  if(k==='swim')return fmtPace(dur/(dist/100))+' /100 м';
+  return (Math.round(dist/(dur/60)*10)/10)+' км/год';
+}
+function goalRow(k,g,mon){
+  var v=sumRange(k,mon,addDays(mon,6)),pc=Math.min(100,Math.round(v/g*100));
+  var tgt=S.cfg.pace[k],act=weekPace(k,mon),note='';
+  if(act)note=' · темп '+act+(tgt?', ціль '+tgt+(k==='bike'?' км/год':k==='swim'?' /100 м':' /км'):'');
+  else if(tgt)note=' · ціль темпу '+tgt;
+  return '<div class="goal"><div class="goal-t"><b>'+SPORTS[k].n+'</b><span class="muted">'+fmtAmount(k,v)+' з '+fmtAmount(k,g)+' · '+pc+'%</span></div>'+
+    '<div class="prog" role="img" aria-label="'+SPORTS[k].n+': '+pc+' відсотків"><i style="width:'+pc+'%;background:'+(pc>=100?'var(--good)':'var(--accent)')+'"></i></div>'+
+    (note?'<p class="small muted">'+note.slice(3)+'</p>':'')+'</div>';
+}
+function goalRows(){
+  var mon=weekStart(T()),out='';
+  SPORT_KEYS.forEach(function(k){
+    if(!S.cfg.sportOn[k])return;
+    var g=S.cfg.goals[k];if(!g)return;
+    out+=goalRow(k,g,mon);
+  });
+  return out;
+}
+function planRows(){
+  var w=planWeek();if(!w)return '';
+  var mon=weekStart(T()),out='';
+  SPORT_KEYS.forEach(function(k){
+    var g=Number(w[k])||0;if(!g)return;
+    out+=goalRow(k,g,mon);
+  });
+  if(!out)return '';
+  if(w.note)out+='<p class="small muted" style="margin-top:6px">'+esc(w.note)+'</p>';
+  return out;
+}
+function exNames(sport){
+  var m={};S.wlog.forEach(function(w){if(sport&&w.sport!==sport)return;(w.exs||[]).forEach(function(e){m[e.n]=(m[e.n]||0)+1})});
+  return Object.keys(m).sort(function(a,b){return m[b]-m[a]||a.localeCompare(b)});
+}
+function best(sets){var b=null;sets.forEach(function(s){if(!b||s.kg>b.kg||(s.kg===b.kg&&s.r>b.r))b=s});return b}
+function vol(w){var v=0;(w.exs||[]).forEach(function(e){e.sets.forEach(function(s){v+=s.kg*s.r})});return v}
+function axis(W,H,pl,pr,pt,pb,mn,mx,fmt){
+  var g='';[mn,(mn+mx)/2,mx].forEach(function(v){
+    var y=pt+(mx-v)/(mx-mn)*(H-pt-pb);
+    g+='<line x1="'+pl+'" y1="'+y.toFixed(1)+'" x2="'+(W-pr)+'" y2="'+y.toFixed(1)+'" stroke="var(--line)" stroke-width="1"/>'+
+       '<text x="'+(pl-8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+fmt(v)+'</text>';
+  });
+  return g;
+}
+function chartWeights(name){
+  var pts=[];
+  S.wlog.slice().sort(function(a,b){return a.date.localeCompare(b.date)}).forEach(function(w){
+    var e=(w.exs||[]).find(function(x){return x.n===name});if(!e)return;
+    var b=best(e.sets);if(b&&b.kg>0)pts.push({d:w.date,kg:b.kg});
+  });
+  if(pts.length<2)return '<p class="small muted" style="margin-top:8px">Графік з’явиться, коли буде щонайменше два тренування з цією вправою.</p>';
+  var W=600,H=170,pl=46,pr=12,pt=14,pb=26;
+  var ks=pts.map(function(p){return p.kg}),mn=Math.min.apply(null,ks),mx=Math.max.apply(null,ks);
+  if(mx===mn){mx=mn+2.5;mn=Math.max(0,mn-2.5)}
+  var pv=(mx-mn)*0.15;mn=Math.max(0,mn-pv);mx=mx+pv;
+  var X=function(i){return pl+i*(W-pl-pr)/(pts.length-1)};
+  var Y=function(v){return pt+(mx-v)/(mx-mn)*(H-pt-pb)};
+  var line=pts.map(function(p,i){return (i?'L':'M')+X(i).toFixed(1)+' '+Y(p.kg).toFixed(1)}).join(' ');
+  var area=line+' L'+X(pts.length-1).toFixed(1)+' '+(H-pb)+' L'+pl+' '+(H-pb)+' Z';
+  var dots=pts.map(function(p,i){return '<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(p.kg).toFixed(1)+'" r="'+(i===pts.length-1?4.5:3)+'" fill="var(--accent)"/>'}).join('');
+  var delta=pts[pts.length-1].kg-pts[0].kg;
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Робоча вага у вправі '+esc(name)+': від '+pts[0].kg+' до '+pts[pts.length-1].kg+' кг">'+
+    axis(W,H,pl,pr,pt,pb,mn,mx,function(v){return Math.round(v*10)/10})+
+    '<path d="'+area+'" fill="var(--accent)" opacity="0.1"/><path d="'+line+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+dots+
+    '<text x="'+pl+'" y="'+(H-6)+'" font-size="11" fill="var(--muted)">'+fmtDate(pts[0].d)+'</text>'+
+    '<text x="'+(W-pr)+'" y="'+(H-6)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+fmtDate(pts[pts.length-1].d)+'</text></svg>'+
+    '<p class="small muted">Найбільша вага за тренування · '+(delta>0?'+'+(Math.round(delta*10)/10)+' кг за '+pts.length+' тренувань':delta<0?(Math.round(delta*10)/10)+' кг':'без змін')+'</p>';
+}
+function chartWeeks(sport){
+  var mon=weekStart(T()),ws=[];
+  for(var i=7;i>=0;i--){var a=addDays(mon,-7*i);ws.push({a:a,v:sumRange(sport,a,addDays(a,6))})}
+  var goal=S.cfg.goals[sport]||0;
+  var mx=Math.max.apply(null,ws.map(function(x){return x.v}).concat([goal,1]))*1.15;
+  var W=600,H=180,pl=46,pr=12,pt=14,pb=28;
+  var slot=(W-pl-pr)/ws.length,bw=Math.min(44,slot*0.56);
+  var bars=ws.map(function(x,i){
+    var h=(H-pt-pb)*(x.v/mx),y=H-pb-h,cx=pl+slot*i+slot/2;
+    return (h>0.5?'<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="4" fill="var(--accent)" opacity="'+(i===ws.length-1?'1':'0.55')+'"/>':'')+
+      '<text x="'+cx.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+fmtDate(x.a)+'</text>';
+  }).join('');
+  var gl=goal?'<line x1="'+pl+'" y1="'+(pt+(mx-goal)/mx*(H-pt-pb)).toFixed(1)+'" x2="'+(W-pr)+'" y2="'+(pt+(mx-goal)/mx*(H-pt-pb)).toFixed(1)+'" stroke="var(--good)" stroke-width="1.5" stroke-dasharray="5 4"/>':'';
+  var tot=ws[ws.length-1].v;
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+SPORTS[sport].n+' по тижнях, останній тиждень '+fmtAmount(sport,tot)+'">'+
+    axis(W,H,pl,pr,pt,pb,0,mx,function(v){return sport==='swim'?Math.round(v):Math.round(v*10)/10})+gl+bars+'</svg>'+
+    '<p class="small muted">Обсяг по тижнях'+(goal?' · пунктир — тижнева ціль '+fmtAmount(sport,goal):'')+'</p>';
+}
+function raceCard(){
+  var rs=S.cfg.races||[];if(!rs.length)return '';
+  var t=T();
+  var sorted=rs.slice().sort(function(a,b){return (a.d||'9999').localeCompare(b.d||'9999')});
+  return '<section class="card"><h2>Змагання</h2>'+sorted.map(function(r){
+    var n=r.d?diffDays(r.d,t):null;
+    var pill=r.d?(n<0?'<span class="pill">позаду</span>':n===0?'<span class="pill bad">сьогодні</span>':'<span class="pill '+(n<=14?'warn':'accent')+'">через '+n+' дн.</span>'):'<span class="pill">дата не вказана</span>';
+    return '<div class="row"><div class="rb" role="button" tabindex="0" data-act="edit-race" data-id="'+r.id+'"><div class="ttl">'+esc(r.n)+'</div><div class="meta">'+pill+(r.d?'<span class="pill">'+fmtDate(r.d)+'</span>':'')+'</div></div></div>';
+  }).join('')+'<div class="toolbar" style="margin-top:10px"><button class="btn sm" data-act="add-race">+ Змагання</button></div></section>';
+}
+function viewTraining(){
+  var t=T(),mon=weekStart(t);
+  var log=S.wlog.slice().sort(function(a,b){return b.date.localeCompare(a.date)});
+  var used={};log.forEach(function(w){used[w.sport]=1});
+  SPORT_KEYS.forEach(function(k){if(S.cfg.sportOn[k])used[k]=1;else if(!log.some(function(w){return w.sport===k}))delete used[k]});
+  var keys=SPORT_KEYS.filter(function(k){return used[k]});
+  var sel=ui.sportSel&&keys.indexOf(ui.sportSel)>-1?ui.sportSel:'';
+  var html=exBanner()+'<div class="page-h"><h1>Спорт</h1><button class="btn primary" data-act="add-wlog">+ Записати</button></div>';
+  var pr=planRows(),gr=goalRows();
+  if(pr)html+='<section class="card"><h2>План на цей тиждень</h2>'+pr+'</section>';
+  else if(gr)html+='<section class="card"><h2>Цей тиждень</h2>'+gr+'</section>';
+  var nextW=[];
+  for(var q=1;q<=4;q++){var mk=addDays(mon,7*q),pw=S.plan.weeks[mk];if(pw)nextW.push({w:mk,p:pw})}
+  if(nextW.length)html+='<div class="sec">Далі за планом</div><section class="card">'+nextW.map(function(x){
+    var line=SPORT_KEYS.filter(function(k){return Number(x.p[k])>0}).map(function(k){return SPORTS[k].n+' '+fmtAmount(k,Number(x.p[k]))}).join(' · ');
+    return '<div class="row"><div class="rb"><div class="ttl">Тиждень з '+fmtDate(x.w)+'</div><div class="meta"><span class="pill">'+esc(line||'без норм')+'</span></div>'+(x.p.note?'<p class="small muted" style="margin-top:4px">'+esc(x.p.note)+'</p>':'')+'</div></div>';
+  }).join('')+'</section>';
+  html+=raceCard();
+  if(keys.length){
+    html+='<div class="chips">'+[{id:'',n:'Усе'}].concat(keys.map(function(k){return {id:k,n:SPORTS[k].n}})).map(function(c){
+      return '<button class="chip" data-act="sport-sel" data-s="'+c.id+'"'+(sel===c.id?' style="border-color:var(--accent);color:var(--accent)"':'')+'>'+c.n+'</button>';
+    }).join('')+'</div>';
+  }
+  if(sel&&CARDIO[sel]){
+    var w4=sumRange(sel,addDays(mon,-21),addDays(mon,6)),best1=0,bestW=null;
+    log.forEach(function(w){if(w.sport===sel&&amount(w)>best1){best1=amount(w);bestW=w}});
+    html+='<div class="tiles"><div class="tile"><b>'+fmtAmount(sel,sumRange(sel,mon,addDays(mon,6)))+'</b><span>цей тиждень</span></div>'+
+      '<div class="tile"><b>'+fmtAmount(sel,w4)+'</b><span>4 тижні</span></div>'+
+      '<div class="tile"><b>'+(bestW?fmtAmount(sel,best1):'—')+'</b><span>найдовше</span></div></div>';
+    html+='<section class="card" style="margin-top:12px">'+chartWeeks(sel)+'</section>';
+  }else if(sel==='gym'||(!sel&&exNames().length)){
+    var names=exNames(),ex=ui.exSel&&names.indexOf(ui.exSel)>-1?ui.exSel:names[0];
+    if(names.length)html+='<div class="sec">Прогрес у вправі</div><section class="card"><div class="chips">'+names.slice(0,10).map(function(n){
+      return '<button class="chip" data-act="ex-sel" data-n="'+esc(n)+'"'+(n===ex?' style="border-color:var(--accent);color:var(--accent)"':'')+'>'+esc(n)+'</button>';
+    }).join('')+'</div>'+chartWeights(ex)+'</section>';
+  }
+  var list=log.filter(function(w){return !sel||w.sport===sel});
+  html+='<div class="sec">Журнал</div>';
+  html+=list.length?list.slice(0,25).map(function(w){
+    var meta=[fmtLong(w.date)];
+    if(w.dur)meta.push(durLabel(Math.round(w.dur)));
+    var pc=paceOf(w);if(pc)meta.push(pc);
+    var right=CARDIO[w.sport]?distOf(w):(vol(w)?Math.round(vol(w))+' кг об’єму':'');
+    return '<section class="card" style="margin-bottom:10px"><div class="place-h"><div><h3>'+esc(w.name||SPORTS[w.sport].n)+'</h3><p class="small muted">'+meta.join(' · ')+'</p></div>'+
+      (right?'<span class="pill accent">'+right+'</span>':'')+'</div>'+
+      ((w.exs&&w.exs.length)?'<div class="lines">'+w.exs.map(function(e){
+        return '<span><b style="font-weight:500;color:var(--ink)">'+esc(e.n)+'</b> · '+e.sets.map(function(st){return st.kg+'×'+st.r}).join(', ')+'</span>';
+      }).join('')+'</div>':'')+
+      (w.note?'<p class="small muted" style="margin-top:6px">'+esc(w.note)+'</p>':'')+
+      '<div class="toolbar" style="margin-top:10px"><button class="btn sm" data-act="edit-wlog" data-id="'+w.id+'">Змінити</button></div></section>';
+  }).join(''):'<section class="card"><p class="empty">Записів немає. Натисни «Записати» після тренування, і тут з’явиться прогрес.</p></section>';
+  return html;
+}
+
+function barHtml(v,g,color){
+  var pc=g>0?Math.min(100,Math.round(v/g*100)):0;
+  return '<div class="prog"><i style="width:'+pc+'%;background:'+(pc>=100?'var(--good)':(color||'var(--accent)'))+'"></i></div>';
+}
+function weekCard(){
+  var g=S.cfg.weekXp;if(!g)return '';
+  var mon=weekStart(T()),v=weekXp(mon),st=weekStreak(),left=Math.max(0,g-v);
+  return '<div class="goal"><div class="goal-t"><b>Виклик тижня</b><span class="muted">'+v+' з '+g+' XP</span></div>'+
+    barHtml(v,g)+'<p class="small muted">'+(v>=g?'Виконано'+(st>1?' · '+st+' тижні поспіль':''):'Лишилось '+left+' XP до кінця тижня')+'</p></div>';
+}
+function goalCard(){
+  var r=goalReward();if(!r)return '';
+  var b=Math.max(0,bal()),left=Math.max(0,r.cost-b);
+  return '<div class="goal"><div class="goal-t"><b>Ціль: '+esc(r.n)+'</b><span class="muted">'+b+' з '+r.cost+' XP</span></div>'+
+    barHtml(b,r.cost)+'<p class="small muted">'+(left?'Ще '+left+' XP':'Можна забирати')+'</p></div>';
+}
+function viewRewards(){
+  var b=bal();
+  var html=exBanner()+'<div class="page-h"><h1>Нагороди</h1><button class="btn primary" data-act="add-reward">+ Нагорода</button></div>';
+  html+='<section class="card hero"><div class="lv"><span class="lv-n" style="font-size:32px">'+b+'</span><span class="lv-t">XP у банку</span></div>'+
+    '<div class="hero-r"><p class="small muted">Зароблено за весь час '+S.xp+' · витрачено '+(S.spent||0)+'</p>'+
+    (b<0?'<p class="small" style="color:var(--bad)">Мінус вийшов через зняті галочки. Виконай щось, і баланс вирівняється.</p>':'')+'</div></section>';
+  var wc=weekCard(),gc=goalCard();
+  if(wc||gc)html+='<section class="card">'+wc+gc+'</section>';
+  html+='<div class="sec">Що можна купити</div>';
+  html+=S.rewards.length?'<section class="card">'+S.rewards.slice().sort(function(a,c){return a.cost-c.cost}).map(function(r){
+    var ok=b>=r.cost,isGoal=r.id===S.cfg.goalReward;
+    return '<div class="row"><div class="rb" role="button" tabindex="0" data-act="edit-reward" data-id="'+r.id+'"><div class="ttl">'+esc(r.n)+'</div>'+
+      '<div class="meta"><span class="pill '+(ok?'good':'')+'">'+r.cost+' XP</span>'+(ok?'':'<span class="pill">ще '+(r.cost-b)+'</span>')+(isGoal?'<span class="pill accent">ціль</span>':'')+
+      (r.note?'<span class="pill">'+esc(r.note)+'</span>':'')+'</div></div>'+
+      '<div style="display:flex;gap:6px;align-items:center;flex:none">'+
+      '<button class="cbtn" data-act="pin-reward" data-id="'+r.id+'" aria-pressed="'+isGoal+'">'+(isGoal?'Знята ціль':'Ціль')+'</button>'+
+      '<button class="btn sm'+(ok?' primary':'')+'" data-act="buy" data-id="'+r.id+'">Купити</button></div></div>';
+  }).join('')+'</section>':'<section class="card"><p class="empty">Нагород немає. Додай те, що тобі справді приємно, і постав ціну в очках.</p></section>';
+  if(S.buys.length){
+    html+='<div class="sec">Куплено</div><section class="card">'+S.buys.slice(0,10).map(function(x){
+      return '<div class="row"><div class="rb"><div class="ttl">'+esc(x.n)+'</div><div class="meta"><span class="pill">'+fmtDate(x.d)+'</span><span class="pill">−'+x.cost+' XP</span></div></div>'+
+        '<button class="cbtn" data-act="undo-buy" data-id="'+x.id+'">Повернути</button></div>';
+    }).join('')+'</section>';
+  }
+  return html;
+}
+
+function viewSettings(){
+  var c=S.cfg;
+  var html='<div class="page-h"><h1>Налаштування</h1><button class="btn sm" data-act="tab" data-tab="today">Готово</button></div>';
+  html+='<div class="sec">Загальне</div><section class="card">'+
+    '<div class="setrow"><div><label for="st-xp">Очки досвіду і нагороди</label><p class="small muted">Вимкни, якщо не треба гри</p></div>'+
+    '<span class="sw"><input type="checkbox" id="st-xp" data-act="cfg" data-k="xp"'+(c.xp?' checked':'')+'><span></span></span></div>'+
+    (c.xp?'<div class="setrow"><div><label for="st-week">Виклик тижня, XP</label><p class="small muted">0 — не показувати</p></div>'+
+    '<input class="num" type="number" id="st-week" min="0" max="10000" step="10" inputmode="numeric" value="'+c.weekXp+'" data-act="cfg" data-k="weekXp"></div>':'')+
+    '<div class="setrow"><div><label for="st-pool">Довжина басейну</label><p class="small muted">Один басейн = стільки метрів</p></div>'+
+    '<input class="num" type="number" id="st-pool" min="10" max="100" step="1" inputmode="numeric" value="'+c.pool+'" data-act="cfg" data-k="pool"></div></section>';
+
+  html+='<div class="sec">Кнопки знизу на телефоні</div><section class="card">'+
+    '<p class="small muted">«Сьогодні» завжди перша, остання — «Ще». Вибери ще три розділи.</p>'+
+    '<div class="navpick">'+NAV_PICK.filter(secOn).map(function(k){
+      var on=c.nav.indexOf(k)>-1;
+      return '<button data-act="nav-pick" data-k="'+k+'" aria-pressed="'+on+'">'+SECTIONS[k].n+'</button>';
+    }).join('')+'</div>'+
+    '<p class="small muted" style="margin-top:8px">Вибрано '+c.nav.length+' з 3. На комп’ютері вгорі видно всі розділи.</p></section>';
+
+  html+='<div class="sec">Блоки на головній</div><section class="card">'+c.home.map(function(b,i){
+    var nm=HOME_IDS[b.id]?HOME_IDS[b.id].n:b.id;
+    return '<div class="ordrow"><button class="ab" data-act="home-move" data-i="'+i+'" data-d="-1" aria-label="Вище: '+esc(nm)+'"'+(i===0?' disabled style="opacity:.35"':'')+'>↑</button>'+
+      '<button class="ab" data-act="home-move" data-i="'+i+'" data-d="1" aria-label="Нижче: '+esc(nm)+'"'+(i===c.home.length-1?' disabled style="opacity:.35"':'')+'>↓</button>'+
+      '<span class="nm">'+esc(nm)+'</span>'+
+      '<span class="sw"><input type="checkbox" data-act="home-on" data-id="'+b.id+'"'+(b.on?' checked':'')+' aria-label="Показувати: '+esc(nm)+'"><span></span></span></div>';
+  }).join('')+'</section>';
+
+  html+='<div class="sec">Спорт</div><section class="card">'+SPORT_KEYS.map(function(k){
+    var on=c.sportOn[k];
+    var pace=k==='run'?'хв/км':k==='swim'?'хв/100 м':k==='bike'?'км/год':'';
+    return '<div class="setrow"><div><label for="st-s-'+k+'">'+SPORTS[k].n+'</label><p class="small muted">'+(on?'ціль на тиждень у '+SPORTS[k].goal:'без цілі; записи лишаються')+'</p></div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+      (on?'<input class="num" style="width:84px" type="number" min="0" max="100000" step="'+(k==='swim'?'100':'1')+'" inputmode="numeric" value="'+c.goals[k]+'" data-act="cfg-goal" data-k="'+k+'" aria-label="Ціль, '+SPORTS[k].n+'">':'')+
+      '<span class="sw"><input type="checkbox" id="st-s-'+k+'" data-act="cfg-sport" data-k="'+k+'"'+(on?' checked':'')+'><span></span></span></div></div>'+
+      (on&&pace?'<div class="setrow"><div><label for="st-p-'+k+'">Темп, '+pace+'</label><p class="small muted">Необов’язково</p></div>'+
+      '<input class="num" style="width:84px" type="text" id="st-p-'+k+'" inputmode="decimal" maxlength="6" placeholder="'+(k==='bike'?'28':'5:30')+'" value="'+esc(c.pace[k])+'" data-act="cfg-pace" data-k="'+k+'"></div>':'');
+  }).join('')+'</section>';
+  var pw=Object.keys(S.plan.weeks).length;
+  html+='<section class="card" style="margin-top:12px"><div class="setrow"><div><label>План підготовки</label><p class="small muted">'+(pw?pw+' тижнів у плані':'Плану немає. Скажи в чаті, до чого готуєшся, і я складу норми по тижнях')+'</p></div>'+
+    (pw?'<button class="btn sm danger" data-act="plan-clear">Очистити</button>':'')+'</div></section>';
+
+  html+='<div class="sec">Змагання</div><section class="card">'+
+    (c.races.length?c.races.map(function(r){
+      return '<div class="row"><div class="rb" role="button" tabindex="0" data-act="edit-race" data-id="'+r.id+'"><div class="ttl">'+esc(r.n)+'</div><div class="meta">'+(r.d?'<span class="pill">'+fmtDate(r.d)+'</span>':'<span class="pill warn">вкажи дату</span>')+'</div></div></div>';
+    }).join(''):'<p class="empty">Змагань немає.</p>')+
+    '<div class="toolbar" style="margin-top:10px"><button class="btn sm" data-act="add-race">+ Змагання</button></div></section>';
+
+  html+='<div class="sec">Категорії покупок</div><section class="card">'+
+    c.shopCats.map(function(x){
+      return '<div class="catrow"><input type="text" maxlength="30" value="'+esc(x.n)+'" data-act="cat-name" data-id="'+x.id+'" aria-label="Назва категорії">'+
+        (c.shopCats.length>1?'<button class="btn sm danger" data-act="cat-del" data-id="'+x.id+'">Видалити</button>':'')+'</div>';
+    }).join('')+
+    '<form class="addrow" data-act="cat-add" style="margin-top:12px"><input id="cat-in" type="text" maxlength="30" placeholder="Нова категорія" autocomplete="off"><button class="btn" type="submit">Додати</button></form>'+
+    '<p class="small muted" style="margin-top:8px">Видалена категорія не прибирає товари: вони переходять в останню зі списку.</p></section>';
+
+  html+='<div class="sec">Дані</div><section class="card">'+
+    '<div class="setrow"><div><label>Копія всіх даних</label><p class="small muted">Зміни, пари, справи, тренування, покупки, підписки, звички, налаштування</p></div>'+
+    '<button class="btn sm" data-act="export">Скопіювати</button></div>'+
+    '<div class="setrow"><div><label>Відновити з копії</label><p class="small muted">Замінить усе, що зараз у застосунку</p></div>'+
+    '<button class="btn sm" data-act="import">Вставити</button></div>'+
+    '<div class="setrow"><div><label>Додати записи</label><p class="small muted">Текст, який дає Claude: розклад, план тренувань, покупки</p></div>'+
+    '<button class="btn sm" data-act="records">Вставити записи</button></div></section>';
+  var anyEx=S.events.some(function(e){return e.ex})||S.items.some(function(i){return i.ex})||S.places.some(function(x){return x.ex})||S.shop.some(function(x){return x.ex})||S.wlog.some(function(x){return x.ex})||S.rewards.some(function(x){return x.ex})||S.subs.some(function(x){return x.ex});
+  if(anyEx)html+='<div class="sec">Приклади</div><section class="card"><div class="setrow"><div><label>Дані для прикладу</label><p class="small muted">Зміни, тренування, покупки, години роботи, нагороди</p></div><button class="btn sm" data-act="clear-ex">Прибрати</button></div></section>';
+  return html;
+}
+
+function subPill(x){
+  var n=diffDays(x.next,T());
+  if(n<0)return '<span class="pill bad">мало списатись '+(-n)+' дн. тому</span>';
+  if(n===0)return '<span class="pill bad">сьогодні</span>';
+  if(n===1)return '<span class="pill warn">завтра</span>';
+  if(n<=7)return '<span class="pill warn">через '+n+' '+pl(n,['день','дні','днів'])+'</span>';
+  return '<span class="pill">'+fmtDate(x.next)+' · через '+n+' '+pl(n,['день','дні','днів'])+'</span>';
+}
+function subRow(x){
+  return '<div class="row"><span class="bar" style="background:var(--gold)"></span>'+
+    '<div class="rb" role="button" tabindex="0" data-act="edit-sub" data-id="'+x.id+'"><div class="ttl">'+esc(x.n)+'</div>'+
+    '<div class="meta">'+subPill(x)+(subCost(x)?'<span class="pill accent">'+esc(subCost(x))+'</span>':'')+
+    '<span class="pill">'+PERIODS[x.every].n+'</span>'+(x.note?'<span class="pill">'+esc(x.note)+'</span>':'')+'</div></div>'+
+    '<button class="btn sm" data-act="sub-paid" data-id="'+x.id+'">Списалось</button></div>';
+}
+function viewSubs(){
+  var list=S.subs.slice().sort(function(a,b){return a.next.localeCompare(b.next)});
+  var soon=list.filter(subSoon),later=list.filter(function(x){return !subSoon(x)});
+  var tot=monthlyTotal();
+  var html=exBanner()+'<div class="page-h"><h1>Підписки</h1><button class="btn primary" data-act="add-sub">+ Підписка</button></div>';
+  if(tot)html+='<div class="tiles" style="grid-template-columns:repeat(2,1fr)"><div class="tile"><b>'+esc(tot)+'</b><span>на місяць разом</span></div>'+
+    '<div class="tile"><b>'+list.length+'</b><span>'+pl(list.length,['підписка','підписки','підписок'])+'</span></div></div>';
+  if(soon.length)html+='<div class="sec">Скоро списується</div><section class="card">'+soon.map(subRow).join('')+'</section>';
+  if(later.length)html+='<div class="sec">Далі</div><section class="card">'+later.map(subRow).join('')+'</section>';
+  if(!list.length)html+='<section class="card" style="margin-top:12px"><p class="empty">Підписок немає. Додай те, що списується саме, і застосунок нагадає за кілька днів до списання.</p></section>';
+  html+='<p class="small muted" style="margin-top:12px">«Списалось» переносить дату на наступний період. Нагадування видно в застосунку, на телефон воно не приходить.</p>';
+  return html;
+}
+function subSheet(id){
+  var x=id?S.subs.find(function(q){return q.id===id}):null;
+  var v=x||{n:'',cost:'',cur:'zł',every:'month',next:addDays(T(),7),remind:3,note:''};
+  openSheet('<h2>'+(x?'Змінити підписку':'Нова підписка')+'</h2>'+
+    '<label for="f-name">Що це</label><input id="f-name" type="text" maxlength="60" value="'+esc(v.n)+'" placeholder="Spotify, зал, хмара, інтернет">'+
+    '<div class="two"><div><label for="f-cost">Сума</label><input id="f-cost" type="number" min="0" max="100000" step="0.01" inputmode="decimal" value="'+(v.cost===''?'':v.cost)+'" placeholder="Необов’язково"></div>'+
+    '<div><label for="f-cur">Валюта</label><input id="f-cur" type="text" maxlength="6" value="'+esc(v.cur||'')+'" placeholder="zł"></div></div>'+
+    '<div class="two"><div><label for="f-every">Як часто</label><select id="f-every">'+Object.keys(PERIODS).map(function(k){return '<option value="'+k+'"'+(k===v.every?' selected':'')+'>'+PERIODS[k].n+'</option>'}).join('')+'</select></div>'+
+    '<div><label for="f-next">Наступне списання</label><input id="f-next" type="date" value="'+v.next+'"></div></div>'+
+    '<label for="f-rem">Нагадати за скільки днів</label><input id="f-rem" class="num" style="width:96px;text-align:left" type="number" min="0" max="60" step="1" inputmode="numeric" value="'+v.remind+'">'+
+    '<label for="f-note">Нотатка</label><input id="f-note" type="text" maxlength="60" value="'+esc(v.note||'')+'" placeholder="Напр. скасувати до продовження">'+
+    '<p class="err" id="err" role="alert"></p>'+
+    '<div class="actions">'+(x?'<button class="btn danger" id="f-del">Видалити</button>':'')+'<button class="btn" id="f-cancel">Скасувати</button><button class="btn primary" id="f-save">Зберегти</button></div>');
+  $('#f-cancel').addEventListener('click',closeSheet);
+  if(x)armDelete($('#f-del'),function(){S.subs=S.subs.filter(function(q){return q.id!==x.id});save();closeSheet()});
+  $('#f-save').addEventListener('click',function(){
+    var n=$('#f-name').value.trim().slice(0,60),nx=$('#f-next').value;
+    if(!n)return setErr('Впиши назву.');
+    if(!okD(nx))return setErr('Обери дату наступного списання.');
+    var c=$('#f-cost').value===''?'':Math.max(0,Number($('#f-cost').value)||0);
+    var rm=Math.min(60,Math.max(0,Math.round(Number($('#f-rem').value)||0)));
+    var o={id:x?x.id:uid(),n:n,cost:c,cur:$('#f-cur').value.trim().slice(0,6),every:PERIODS[$('#f-every').value]?$('#f-every').value:'month',next:nx,remind:rm,note:$('#f-note').value.trim().slice(0,60)};
+    if(x)S.subs=S.subs.map(function(q){return q.id===x.id?o:q});else S.subs.push(o);
+    save();closeSheet();
+  });
+}
+
+function viewHours(){
+  var w=(new Date().getDay()+6)%7;
+  var html=exBanner()+'<div class="page-h"><h1>Графіки роботи</h1><button class="btn primary" data-act="add-place">+ Місце</button></div><div class="grid">';
+  html+=S.places.map(function(p){
+    var st=placeStatus(p);
+    return '<section class="card"><div class="place-h"><div><h3>'+esc(p.name)+'</h3>'+(p.note?'<p class="small muted">'+esc(p.note)+'</p>':'')+'</div>'+
+      '<span class="pill '+(st.open?(st.soon?'warn':'good'):'bad')+'">'+st.text+'</span></div>'+
+      '<table class="wk"><tbody>'+p.h.map(function(h,k){return '<tr'+(k===w?' class="now"':'')+'><td>'+WD_FULL[k].charAt(0).toUpperCase()+WD_FULL[k].slice(1)+'</td><td>'+(h?h[0]+'–'+h[1]:'зачинено')+'</td></tr>'}).join('')+'</tbody></table>'+
+      '<div class="toolbar" style="margin-top:10px"><button class="btn sm" data-act="edit-place" data-id="'+p.id+'">Змінити</button></div></section>';
+  }).join('');
+  if(!S.places.length)html+='<section class="card"><p class="empty">Додай зал, бібліотеку чи офіс, щоб бачити, чи вони відкриті зараз.</p></section>';
+  return html+'</div>';
+}
+
+function render(){
+  var main=$('#main'),keep=main.scrollTop;
+  var views={today:viewToday,calendar:viewCalendar,deeds:viewDeeds,training:viewTraining,shop:viewShop,hours:viewHours,rewards:viewRewards,subs:viewSubs,prefs:viewSettings,more:viewMore};
+  main.innerHTML=(views[ui.tab]||viewToday)();
+  main.scrollTop=keep;
+  if(ui.focusShop){ui.focusShop=false;var si=$('#shop-in');if(si)si.focus()}
+  if(ui.focusCat){ui.focusCat=false;var ci=$('#cat-in');if(ci)ci.focus()}
+  var nav=navMobile();
+  $('#tabs').innerHTML=allSecs().map(function(k){
+    return '<button class="tab'+(nav.indexOf(k)>-1?'':' sec')+'" data-act="tab" data-tab="'+k+'"'+(ui.tab===k?' aria-current="page"':'')+'><svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS[k]+'</svg><span>'+SECTIONS[k].n+'</span></button>';
+  }).join('')+'<button class="tab more" data-act="tab" data-tab="more"'+((ui.tab==='more'||nav.indexOf(ui.tab)<0)?' aria-current="page"':'')+'><svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS.more+'</svg><span>Ще</span></button>';
+  var g=$('#gear');if(g){if(ui.tab==='prefs')g.setAttribute('aria-current','page');else g.removeAttribute('aria-current')}
+}
+function setTab(t){
+  ui.tab=t;$('#main').scrollTop=0;render();
+  if(t!=='more'&&!tabs().some(function(x){return x===t}))return;
+  try{if(location.hash!=='#'+t)location.hash=t}catch(e){}
+}
+
+/* ---------- sheets ---------- */
+function openSheet(html){
+  sheetOpen=true;
+  var layer=$('#layer');
+  layer.innerHTML='<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">'+html+'</div></div>';
+  $('#scrim').addEventListener('mousedown',function(e){if(e.target.id==='scrim')closeSheet()});
+  var f=layer.querySelector('input[type=text],select,textarea');if(f)f.focus();
+}
+function closeSheet(){
+  sheetOpen=false;$('#layer').innerHTML='';
+  if(pendingRender){pendingRender=false}
+  render();
+}
+function setErr(m){var e=$('#err');if(e)e.textContent=m||''}
+function opts(map,sel,fmt){return Object.keys(map).map(function(k){return '<option value="'+k+'"'+(k===sel?' selected':'')+'>'+(fmt?fmt(k,map[k]):map[k])+'</option>'}).join('')}
+function armDelete(btn,fn){
+  var armed=false;
+  btn.addEventListener('click',function(){
+    if(!armed){armed=true;btn.textContent='Точно видалити?';setTimeout(function(){armed=false;btn.textContent='Видалити'},3500)}
+    else fn();
+  });
+}
+
+function evSheet(id,date){
+  var e=id?S.events.find(function(x){return x.id===id}):null;
+  var v=e||{type:'workout',title:'',date:date||T(),start:'18:00',end:'19:00',repeat:[],until:''};
+  var rep=v.repeat&&v.repeat.length;
+  openSheet('<h2>'+(e?'Змінити подію':'Нова подія')+'</h2>'+
+    '<label for="f-type">Тип</label><select id="f-type">'+opts(TYPES,v.type)+'</select>'+
+    '<label for="f-title">Назва</label><input id="f-title" type="text" maxlength="80" value="'+esc(v.title)+'" placeholder="Наприклад, ноги або ранкова зміна">'+
+    '<label for="f-date">Дата</label><input id="f-date" type="date" value="'+v.date+'">'+
+    '<div class="two"><div><label for="f-start">Початок</label><input id="f-start" type="time" value="'+v.start+'"></div><div><label for="f-end">Кінець</label><input id="f-end" type="time" value="'+v.end+'"></div></div>'+
+    '<label class="inl" for="f-rep"><input id="f-rep" type="checkbox"'+(rep?' checked':'')+'> Повторювати щотижня</label>'+
+    '<div id="rep-box"'+(rep?'':' hidden')+'><div class="wds">'+WDS.map(function(n,k){return '<label><input type="checkbox" class="f-wd" value="'+k+'"'+(rep&&v.repeat.indexOf(k)>-1?' checked':'')+'>'+n+'</label>'}).join('')+'</div>'+
+    '<label for="f-until">Повторювати до (необов’язково)</label><input id="f-until" type="date" value="'+(v.until||'')+'"><p class="small muted" style="margin-top:6px">Зміни стосуються всієї серії.</p></div>'+
+    '<p class="err" id="err" role="alert"></p>'+
+    '<div class="actions">'+(e?'<button class="btn danger" id="f-del">Видалити</button>':'')+'<button class="btn" id="f-cancel">Скасувати</button><button class="btn primary" id="f-save">Зберегти</button></div>');
+  $('#f-rep').addEventListener('change',function(){$('#rep-box').hidden=!this.checked});
+  $('#f-cancel').addEventListener('click',closeSheet);
+  if(e)armDelete($('#f-del'),function(){S.events=S.events.filter(function(x){return x.id!==e.id});save();closeSheet()});
+  $('#f-save').addEventListener('click',function(){
+    var title=$('#f-title').value.trim(),date=$('#f-date').value,st=$('#f-start').value,en=$('#f-end').value;
+    if(!title)return setErr('Впиши назву події.');
+    if(!date)return setErr('Обери дату.');
+    if(!st||!en)return setErr('Вкажи час початку і кінця.');
+    var repeat=[];
+    if($('#f-rep').checked){
+      document.querySelectorAll('.f-wd').forEach(function(c){if(c.checked)repeat.push(Number(c.value))});
+      if(!repeat.length)repeat=[wd(date)];
+    }
+    var obj={id:e?e.id:uid(),type:$('#f-type').value,title:title,date:date,start:st,end:en,repeat:repeat,until:repeat.length?$('#f-until').value:''};
+    if(e){if(e.note)obj.note=e.note;if(e.src)obj.src=e.src}
+    if(e&&e.ex)obj.ex=0;
+    if(e)S.events=S.events.map(function(x){return x.id===e.id?obj:x});else S.events.push(obj);
+    save();closeSheet();
+  });
+}
+function itemSheet(kind,id,presetDue){
+  var it=id?S.items.find(function(x){return x.id===id}):null;
+  var v=it||{kind:kind||'task',title:'',cat:'home',diff:'mid',due:presetDue||'',steps:[]};
+  openSheet('<h2>'+(it?'Змінити справу':'Нова справа')+'</h2>'+
+    '<label for="f-title">Назва</label><input id="f-title" type="text" maxlength="100" value="'+esc(v.title)+'" placeholder="Напр. здати проєкт або розібрати шафу">'+
+    '<div class="two"><div><label for="f-diff">Складність</label><select id="f-diff">'+opts(DIFF,v.diff,function(k,o){return o.n+(S.cfg.xp?' · '+o.xp+' XP':'')})+'</select></div>'+
+    '<div><label for="f-cat">Категорія</label><select id="f-cat">'+opts(CATS,v.cat)+'</select></div></div>'+
+    '<label for="f-due">Дедлайн (необов’язково)</label><input id="f-due" type="date" value="'+(v.due||'')+'">'+
+    '<label for="f-steps">Кроки, кожен з нового рядка (необов’язково)</label><textarea id="f-steps" placeholder="Витягти все з полиць&#10;Розкласти на купи&#10;Скласти назад">'+esc((v.steps||[]).map(function(s){return s.t}).join('\n'))+'</textarea>'+
+    '<p class="err" id="err" role="alert"></p>'+
+    '<div class="actions">'+(it?'<button class="btn danger" id="f-del">Видалити</button>':'')+'<button class="btn" id="f-cancel">Скасувати</button><button class="btn primary" id="f-save">Зберегти</button></div>');
+  $('#f-cancel').addEventListener('click',closeSheet);
+  if(it)armDelete($('#f-del'),function(){
+    if(it.done){var dt=it.doneAt||T();addXp(dt,-xpOf(it));S.days[dt]=Math.max(0,(S.days[dt]||0)-1)}
+    S.items=S.items.filter(function(x){return x.id!==it.id});save();closeSheet();
+  });
+  $('#f-save').addEventListener('click',function(){
+    var title=$('#f-title').value.trim();
+    if(!title)return setErr('Впиши назву.');
+    var old=(it&&it.steps)||[];
+    var steps=$('#f-steps').value.split('\n').map(function(s){return s.trim()}).filter(Boolean).map(function(t){
+      var m=old.find(function(o){return o.t===t});return {t:t,d:m?m.d:false};
+    });
+    var diff=$('#f-diff').value;
+    var obj={id:it?it.id:uid(),kind:v.kind,title:title,cat:$('#f-cat').value,diff:diff,due:$('#f-due').value,steps:steps,done:it?it.done:false,doneAt:it?it.doneAt:null};
+    if(it&&it.done&&diff!==it.diff){addXp(it.doneAt||T(),DIFF[diff].xp-xpOf(it))}
+    if(it&&it.ex)obj.ex=0;
+    if(it)S.items=S.items.map(function(x){return x.id===it.id?obj:x});else S.items.push(obj);
+    save();closeSheet();
+  });
+}
+function placeSheet(id){
+  var p=id?S.places.find(function(x){return x.id===id}):null;
+  var v=p||{name:'',note:'',h:[['09:00','18:00'],['09:00','18:00'],['09:00','18:00'],['09:00','18:00'],['09:00','18:00'],null,null]};
+  openSheet('<h2>'+(p?'Змінити місце':'Нове місце')+'</h2>'+
+    '<label for="f-name">Назва</label><input id="f-name" type="text" maxlength="60" value="'+esc(v.name)+'" placeholder="Наприклад, спортзал або деканат">'+
+    '<label for="f-note">Нотатка (необов’язково)</label><input id="f-note" type="text" maxlength="100" value="'+esc(p&&p.ex?'':v.note)+'" placeholder="Кабінет, телефон, посилання">'+
+    '<div style="margin-top:10px">'+v.h.map(function(h,k){
+      return '<div class="hrow"><span>'+WDS[k]+'</span><input type="time" id="o'+k+'" value="'+(h?h[0]:'09:00')+'" aria-label="'+WD_FULL[k]+': відкриття"><input type="time" id="c'+k+'" value="'+(h?h[1]:'18:00')+'" aria-label="'+WD_FULL[k]+': закриття"><label><input type="checkbox" id="x'+k+'"'+(h?'':' checked')+'>зачинено</label></div>';
+    }).join('')+'</div>'+
+    '<p class="err" id="err" role="alert"></p>'+
+    '<div class="actions">'+(p?'<button class="btn danger" id="f-del">Видалити</button>':'')+'<button class="btn" id="f-cancel">Скасувати</button><button class="btn primary" id="f-save">Зберегти</button></div>');
+  $('#f-cancel').addEventListener('click',closeSheet);
+  if(p)armDelete($('#f-del'),function(){S.places=S.places.filter(function(x){return x.id!==p.id});save();closeSheet()});
+  $('#f-save').addEventListener('click',function(){
+    var name=$('#f-name').value.trim();
+    if(!name)return setErr('Впиши назву місця.');
+    var h=[];
+    for(var k=0;k<7;k++){
+      if($('#x'+k).checked){h.push(null);continue}
+      var o=$('#o'+k).value,c=$('#c'+k).value;
+      if(!o||!c||toMin(c)<=toMin(o))return setErr(WD_FULL[k]+': закриття має бути пізніше за відкриття.');
+      h.push([o,c]);
+    }
+    var obj={id:p?p.id:uid(),name:name,note:$('#f-note').value.trim(),h:h};
+    if(p)S.places=S.places.map(function(x){return x.id===p.id?obj:x});else S.places.push(obj);
+    save();closeSheet();
+  });
+}
+
+function wlogSheet(id){
+  var w=id?S.wlog.find(function(x){return x.id===id}):null;
+  var v={sport:w?w.sport:'run',date:w?w.date:T(),name:w?(w.name||''):'',
+    dist:w&&w.dist?(w.sport==='swim'?Math.round(w.dist):w.dist):'',
+    laps:w&&w.laps?w.laps:'',note:w&&w.note?w.note:'',
+    dh:w&&w.dur?Math.floor(w.dur/60):'',dm:w&&w.dur?Math.round(w.dur%60):'',
+    exs:w&&w.exs&&w.exs.length?JSON.parse(JSON.stringify(w.exs)):[{n:'',sets:[{kg:'',r:''}]}]};
+  var known=exNames();
+  openSheet('<h2>'+(w?'Змінити тренування':'Записати тренування')+'</h2>'+
+    '<label>Що було</label><div class="seg" id="w-sport">'+SPORT_KEYS.map(function(k){
+      return '<button type="button" data-sp="'+k+'" aria-pressed="'+(k===v.sport)+'">'+SPORTS[k].n+'</button>';
+    }).join('')+'</div>'+
+    '<div class="two"><div><label for="f-date">Дата</label><input id="f-date" type="date" value="'+v.date+'"></div>'+
+    '<div><label for="f-name">Назва</label><input id="f-name" type="text" maxlength="60" value="'+esc(v.name)+'" placeholder="Необов’язково"></div></div>'+
+    '<div id="wbody"></div>'+
+    '<datalist id="exnames">'+known.map(function(n){return '<option value="'+esc(n)+'">'}).join('')+'</datalist>'+
+    '<p class="err" id="err" role="alert"></p>'+
+    '<div class="actions">'+(w?'<button class="btn danger" id="f-del">Видалити</button>':'')+'<button class="btn" id="f-cancel">Скасувати</button><button class="btn primary" id="f-save">Зберегти</button></div>');
+
+  function grab(){
+    var d=$('#f-date');if(d)v.date=d.value;
+    var n=$('#f-name');if(n)v.name=n.value;
+    ['dist','laps','note','dh','dm'].forEach(function(k){var el=$('#w-'+k);if(el)v[k]=el.value});
+  }
+  function dur(){return (Number(v.dh)||0)*60+(Number(v.dm)||0)}
+  function metres(){return (Number(v.laps)||0)*S.cfg.pool}
+  function timeFields(){
+    return '<label>Час</label><div style="display:flex;gap:8px;align-items:center">'+
+      '<input id="w-dh" class="num" style="flex:1;text-align:left" type="number" min="0" max="24" step="1" inputmode="numeric" placeholder="год" value="'+v.dh+'" aria-label="Годин">'+
+      '<input id="w-dm" class="num" style="flex:1;text-align:left" type="number" min="0" max="59" step="1" inputmode="numeric" placeholder="хв" value="'+v.dm+'" aria-label="Хвилин"></div>';
+  }
+  function paintBody(){
+    var h='';
+    if(v.sport==='swim'){
+      h+='<label for="w-laps">Басейнів</label><input id="w-laps" type="number" min="0" max="2000" step="1" inputmode="numeric" value="'+v.laps+'" placeholder="Скільки разів переплив">'+
+        '<p class="small muted" id="w-m" style="margin-top:6px">'+(metres()?'= '+metres()+' м (басейн '+S.cfg.pool+' м)':'Один басейн — '+S.cfg.pool+' м, змінити можна в налаштуваннях')+'</p>'+timeFields();
+    }else if(CARDIO[v.sport]){
+      h+='<label for="w-dist">Відстань, км</label><input id="w-dist" type="number" min="0" max="1000" step="0.1" inputmode="decimal" value="'+v.dist+'" placeholder="Наприклад, 12.5">'+timeFields();
+    }else{
+      h+='<label>Вправи</label><div id="exs"></div><button class="btn sm" id="f-addex" type="button" style="margin-top:10px">+ Вправа</button>'+timeFields();
+    }
+    h+='<label for="w-note">Нотатка</label><input id="w-note" type="text" maxlength="120" value="'+esc(v.note)+'" placeholder="Як пройшло, самопочуття">';
+    $('#wbody').innerHTML=h;
+    if(!CARDIO[v.sport])paintExs();
+  }
+  function paintExs(){
+    var box=$('#exs');if(!box)return;
+    box.innerHTML=v.exs.map(function(e,i){
+      return '<div class="exb"><div class="exh"><input type="text" maxlength="60" value="'+esc(e.n)+'" placeholder="Вправа, напр. присідання" list="exnames" data-e="'+i+'" data-f="n"><button class="x" type="button" data-rm="'+i+'" aria-label="Прибрати вправу">×</button></div>'+
+        e.sets.map(function(st,k){
+          return '<div class="setr"><span class="small muted">'+(k+1)+'</span><input type="number" step="0.5" min="0" max="1000" inputmode="decimal" value="'+(st.kg===''?'':st.kg)+'" placeholder="кг" data-e="'+i+'" data-s="'+k+'" data-f="kg" aria-label="Вага, підхід '+(k+1)+'"><input type="number" step="1" min="0" max="1000" inputmode="numeric" value="'+(st.r===''?'':st.r)+'" placeholder="повт." data-e="'+i+'" data-s="'+k+'" data-f="r" aria-label="Повторення, підхід '+(k+1)+'">'+
+            (e.sets.length>1?'<button class="x" type="button" data-rms="'+i+'-'+k+'" aria-label="Прибрати підхід">×</button>':'<span></span>')+'</div>';
+        }).join('')+
+        '<button class="btn sm" type="button" data-adds="'+i+'" style="margin-top:8px">+ Підхід</button></div>';
+    }).join('');
+  }
+  paintBody();
+  $('#w-sport').addEventListener('click',function(ev){
+    var b=ev.target.closest('[data-sp]');if(!b)return;
+    grab();v.sport=b.dataset.sp;
+    [].forEach.call(this.querySelectorAll('[data-sp]'),function(x){x.setAttribute('aria-pressed',String(x.dataset.sp===v.sport))});
+    paintBody();setErr('');
+  });
+  $('#wbody').addEventListener('input',function(ev){
+    var el=ev.target;
+    if(el.id==='w-laps'){v.laps=el.value;var m=$('#w-m');if(m)m.textContent=metres()?'= '+metres()+' м (басейн '+S.cfg.pool+' м)':'Один басейн — '+S.cfg.pool+' м';return}
+    if(el.dataset.e!=null){
+      if(el.dataset.f==='n')v.exs[el.dataset.e].n=el.value;
+      else v.exs[el.dataset.e].sets[el.dataset.s][el.dataset.f]=el.value;
+    }
+  });
+  $('#wbody').addEventListener('click',function(ev){
+    var b=ev.target.closest('button');if(!b)return;
+    if(b.id==='f-addex'){v.exs.push({n:'',sets:[{kg:'',r:''}]});paintExs();var ins=$('#exs').querySelectorAll('input[data-f="n"]');ins[ins.length-1].focus()}
+    else if(b.dataset.rm!=null){v.exs.splice(Number(b.dataset.rm),1);if(!v.exs.length)v.exs.push({n:'',sets:[{kg:'',r:''}]});paintExs()}
+    else if(b.dataset.adds!=null){var e=v.exs[b.dataset.adds],l=e.sets[e.sets.length-1];e.sets.push({kg:l?l.kg:'',r:l?l.r:''});paintExs()}
+    else if(b.dataset.rms!=null){var q=b.dataset.rms.split('-');v.exs[q[0]].sets.splice(Number(q[1]),1);paintExs()}
+  });
+  $('#f-cancel').addEventListener('click',closeSheet);
+  if(w)armDelete($('#f-del'),function(){S.wlog=S.wlog.filter(function(x){return x.id!==w.id});save();closeSheet()});
+  $('#f-save').addEventListener('click',function(){
+    grab();
+    if(!okD(v.date))return setErr('Обери дату.');
+    var o={id:w?w.id:uid(),date:v.date,sport:v.sport,name:v.name.trim().slice(0,60)||SPORTS[v.sport].n,dur:dur(),note:v.note.trim().slice(0,120),exs:[]};
+    if(CARDIO[v.sport]){
+      o.dist=v.sport==='swim'?metres():(Number(v.dist)||0);
+      if(v.sport==='swim')o.laps=Number(v.laps)||0;
+      if(!o.dist&&!o.dur)return setErr(v.sport==='swim'?'Впиши басейни або час.':'Впиши відстань або час.');
+    }else{
+      o.exs=v.exs.map(function(e){
+        return {n:String(e.n||'').trim().slice(0,60),sets:e.sets.map(function(st){return {kg:Number(st.kg)||0,r:Number(st.r)||0}}).filter(function(st){return st.r>0})};
+      }).filter(function(e){return e.n&&e.sets.length});
+      if(!o.exs.length&&!o.dur)return setErr('Впиши вправу з повтореннями або час.');
+    }
+    if(w)S.wlog=S.wlog.map(function(x){return x.id===w.id?o:x});else S.wlog.push(o);
+    save();closeSheet();
+    if(!w)toast('Записано');
+  });
+}
+function dataSheet(mode,text){
+  if(mode==='out'){
+    openSheet('<h2>Копія даних</h2><p class="small muted">Виділи все й скопіюй. Цей текст можна вставити в новий застосунок.</p>'+
+      '<textarea id="f-data" readonly style="min-height:220px;font-family:var(--font-mono);font-size:12px">'+esc(text)+'</textarea>'+
+      '<div class="actions"><button class="btn" id="f-cancel">Закрити</button><button class="btn primary" id="f-copy">Спробувати скопіювати</button></div>');
+    $('#f-cancel').addEventListener('click',closeSheet);
+    $('#f-data').addEventListener('focus',function(){this.select()});
+    $('#f-copy').addEventListener('click',function(){
+      var el=$('#f-data');el.select();
+      try{navigator.clipboard.writeText(el.value).then(function(){toast('Скопійовано')},function(){toast('Не вийшло. Виділи текст і скопіюй вручну')})}
+      catch(e){toast('Не вийшло. Виділи текст і скопіюй вручну')}
+    });
+    return;
+  }
+  openSheet('<h2>Відновити з копії</h2><p class="small muted">Встав сюди текст копії. Усе, що зараз у застосунку, буде замінено.</p>'+
+    '<textarea id="f-data" style="min-height:220px;font-family:var(--font-mono);font-size:12px" placeholder="{&quot;v&quot;:1, ...}"></textarea>'+
+    '<p class="err" id="err" role="alert"></p>'+
+    '<div class="actions"><button class="btn" id="f-cancel">Скасувати</button><button class="btn primary" id="f-save">Відновити</button></div>');
+  $('#f-cancel').addEventListener('click',closeSheet);
+  $('#f-save').addEventListener('click',function(){
+    var raw=$('#f-data').value.trim();
+    if(!raw)return setErr('Встав текст копії.');
+    var o=null;
+    try{o=JSON.parse(raw)}catch(e){return setErr('Це не схоже на копію: текст не читається.')}
+    if(!o||!Array.isArray(o.items)||!Array.isArray(o.events))return setErr('У копії бракує даних. Це точно той текст?');
+    var n=norm(o);
+    n.rev=(S.rev||0)+1;
+    S=n;saveLocal();dirty=true;setSync(dbDoc?'saving':'local');flush();
+    closeSheet();toast('Дані відновлено');
+  });
+}
+function recordsSheet(){
+  openSheet('<h2>Додати записи</h2><p class="small muted">Встав текст, який дав Claude. Наявні дані лишаться на місці.</p>'+
+    '<textarea id="f-data" style="min-height:200px;font-family:var(--font-mono);font-size:12px" placeholder="[{&quot;type&quot;:&quot;events&quot;, ...}]"></textarea>'+
+    '<p class="err" id="err" role="alert"></p>'+
+    '<div class="actions"><button class="btn" id="f-cancel">Скасувати</button><button class="btn primary" id="f-save">Додати</button></div>');
+  $('#f-cancel').addEventListener('click',closeSheet);
+  $('#f-save').addEventListener('click',function(){
+    var raw=$('#f-data').value.trim();
+    if(!raw)return setErr('Встав текст записів.');
+    var o=null;
+    try{o=JSON.parse(raw)}catch(e){return setErr('Текст не читається. Скопіюй його повністю.')}
+    var n=applyRecords(o);
+    if(!n)return setErr('Жодного запису не додалося. Можливо, вони вже є.');
+    save();closeSheet();toast('Додано записів: '+n);
+  });
+}
+function habitSheet(id){
+  var h=id?S.habits.find(function(x){return x.id===id}):null;
+  var v=h||{n:'',mins:20,days:[0,1,2,3,4,5,6]};
+  openSheet('<h2>'+(h?'Змінити звичку':'Нова звичка')+'</h2>'+
+    '<label for="f-name">Що робити</label><input id="f-name" type="text" maxlength="60" value="'+esc(v.n)+'" placeholder="Англійська, читання, розтяжка">'+
+    '<label for="f-mins">Скільки хвилин</label><input id="f-mins" class="num" style="width:96px;text-align:left" type="number" min="0" max="600" step="5" inputmode="numeric" value="'+(v.mins||'')+'">'+
+    '<label>У які дні</label><div class="wds">'+WDS.map(function(n,k){return '<label><input type="checkbox" class="f-wd" value="'+k+'"'+(v.days.indexOf(k)>-1?' checked':'')+'>'+n+'</label>'}).join('')+'</div>'+
+    '<p class="small muted" style="margin-top:8px">У невибрані дні вогник не гасне.</p>'+
+    '<p class="err" id="err" role="alert"></p>'+
+    '<div class="actions">'+(h?'<button class="btn danger" id="f-del">Видалити</button>':'')+'<button class="btn" id="f-cancel">Скасувати</button><button class="btn primary" id="f-save">Зберегти</button></div>');
+  $('#f-cancel').addEventListener('click',closeSheet);
+  if(h)armDelete($('#f-del'),function(){
+    S.habits=S.habits.filter(function(x){return x.id!==h.id});
+    Object.keys(S.habitLog).forEach(function(d){if(S.habitLog[d])delete S.habitLog[d][h.id]});
+    save();closeSheet();
+  });
+  $('#f-save').addEventListener('click',function(){
+    var n=$('#f-name').value.trim().slice(0,60);
+    if(!n)return setErr('Впиши, що робити.');
+    var days=[];document.querySelectorAll('.f-wd').forEach(function(c){if(c.checked)days.push(Number(c.value))});
+    if(!days.length)return setErr('Обери хоча б один день.');
+    var mins=Math.min(600,Math.max(0,Math.round(Number($('#f-mins').value)||0)));
+    if(h){h.n=n;h.mins=mins;h.days=days}else S.habits.push({id:uid(),n:n,mins:mins,days:days});
+    save();closeSheet();
+  });
+}
+function raceSheet(id){
+  var r=id?S.cfg.races.find(function(x){return x.id===id}):null;
+  openSheet('<h2>'+(r?'Змінити змагання':'Нове змагання')+'</h2>'+
+    '<label for="f-name">Назва</label><input id="f-name" type="text" maxlength="60" value="'+esc(r?r.n:'')+'" placeholder="Півмарафон, триатлон, заплив">'+
+    '<label for="f-date">Дата</label><input id="f-date" type="date" value="'+(r&&r.d?r.d:'')+'">'+
+    '<p class="small muted" style="margin-top:6px">Без дати теж можна: просто буде в списку цілей.</p>'+
+    '<p class="err" id="err" role="alert"></p>'+
+    '<div class="actions">'+(r?'<button class="btn danger" id="f-del">Видалити</button>':'')+'<button class="btn" id="f-cancel">Скасувати</button><button class="btn primary" id="f-save">Зберегти</button></div>');
+  $('#f-cancel').addEventListener('click',closeSheet);
+  if(r)armDelete($('#f-del'),function(){S.cfg.races=S.cfg.races.filter(function(x){return x.id!==r.id});save();closeSheet()});
+  $('#f-save').addEventListener('click',function(){
+    var n=$('#f-name').value.trim().slice(0,60),d=$('#f-date').value;
+    if(!n)return setErr('Впиши назву.');
+    if(d&&!okD(d))return setErr('Дата виглядає дивно.');
+    if(r){r.n=n;r.d=d||''}else S.cfg.races.push({id:uid(),n:n,d:d||''});
+    save();closeSheet();
+  });
+}
+
+/* ---------- events ---------- */
+function addShop(t,cat){
+  t=String(t).trim().slice(0,80);if(!t)return false;
+  if(S.shop.some(function(x){return !x.done&&x.t.toLowerCase()===t.toLowerCase()}))return false;
+  var h=S.shopHist[t.toLowerCase()];
+  S.shop.push({id:uid(),t:t,cat:cat||(h&&h.cat)||guessCat(t),done:false});
+  return true;
+}
+document.addEventListener('submit',function(ev){
+  var f=ev.target.closest('form[data-act]');if(!f)return;
+  ev.preventDefault();
+  if(f.dataset.act==='shop-add'){
+    var inp=$('#shop-in');if(!inp.value.trim()){inp.focus();return}
+    addShop(inp.value);ui.focusShop=true;save();render();
+  }else if(f.dataset.act==='cat-add'){
+    var ci=$('#cat-in'),n=ci.value.trim().slice(0,30);
+    if(!n){ci.focus();return}
+    if(S.cfg.shopCats.length>=8){toast('Більше восьми категорій — то вже забагато');return}
+    S.cfg.shopCats.push({id:'c'+uid(),n:n});
+    ui.focusCat=true;save();render();
+  }
+});
+document.addEventListener('click',function(ev){
+  var el=ev.target.closest('[data-act]');if(!el||el.tagName==='SELECT')return;
+  var a=el.dataset.act;
+  if(a==='tab')setTab(el.dataset.tab);
+  else if(a==='toggle'){var i=S.items.find(function(x){return x.id===el.dataset.id});if(i)setDone(i.id,!i.done)}
+  else if(a==='step')toggleStep(el.dataset.id,Number(el.dataset.i));
+  else if(a==='occ')toggleOcc(el.dataset.key);
+  else if(a==='edit-event')evSheet(el.dataset.id);
+  else if(a==='add-event')evSheet(null,el.dataset.date);
+  else if(a==='edit-item')itemSheet(null,el.dataset.id);
+  else if(a==='add-item')itemSheet(el.dataset.kind,null,el.dataset.date);
+  else if(a==='edit-place')placeSheet(el.dataset.id);
+  else if(a==='add-place')placeSheet();
+  else if(a==='sel-day'){ui.calSel=el.dataset.date;var d=parse(ui.calSel);ui.calY=d.getFullYear();ui.calM=d.getMonth();render()}
+  else if(a==='goto-day'){ui.calSel=el.dataset.date;var d2=parse(ui.calSel);ui.calY=d2.getFullYear();ui.calM=d2.getMonth();setTab('calendar')}
+  else if(a==='cal-prev'){ui.calM--;if(ui.calM<0){ui.calM=11;ui.calY--}render()}
+  else if(a==='cal-next'){ui.calM++;if(ui.calM>11){ui.calM=0;ui.calY++}render()}
+  else if(a==='cal-today'){var n=new Date();ui.calY=n.getFullYear();ui.calM=n.getMonth();ui.calSel=T();render()}
+  else if(a==='toggle-done'){ui.showDone[el.dataset.kind]=!ui.showDone[el.dataset.kind];render()}
+  else if(a==='add-wlog')wlogSheet();
+  else if(a==='edit-wlog')wlogSheet(el.dataset.id);
+  else if(a==='ex-sel'){ui.exSel=el.dataset.n;render()}
+  else if(a==='shop-quick'){addShop(el.dataset.t);save();render()}
+  else if(a==='shop-toggle'){
+    var sh=S.shop.find(function(x){return x.id===el.dataset.id});if(!sh)return;
+    sh.done=!sh.done;
+    if(sh.done){var k=sh.t.toLowerCase();S.shopHist[k]=S.shopHist[k]||{t:sh.t,n:0};S.shopHist[k].n++;S.shopHist[k].cat=sh.cat}
+    save();render();
+  }
+  else if(a==='shop-cat'){
+    var sc=S.shop.find(function(x){return x.id===el.dataset.id});if(!sc)return;
+    sc.cat=nextCat(sc.cat);
+    var kk=sc.t.toLowerCase();if(S.shopHist[kk])S.shopHist[kk].cat=sc.cat;
+    save();render();
+  }
+  else if(a==='shop-filter'){ui.shopCat=el.dataset.c;render()}
+  else if(a==='deed-filter'){ui.deedCat=el.dataset.c;render()}
+  else if(a==='nav-pick'){
+    var k=el.dataset.k,n=S.cfg.nav.slice(),at=n.indexOf(k);
+    if(at>-1)n.splice(at,1);
+    else{if(n.length>=3)n.shift();n.push(k)}
+    if(!n.length){toast('Хоч один розділ має лишитись');return}
+    S.cfg.nav=n;save();render();
+  }
+  else if(a==='home-move'){
+    var i2=Number(el.dataset.i),d2=Number(el.dataset.d),h=S.cfg.home,j2=i2+d2;
+    if(j2<0||j2>=h.length)return;
+    var tmp=h[i2];h[i2]=h[j2];h[j2]=tmp;save();render();
+  }
+  else if(a==='plan-clear'){
+    if(el.textContent!=='Точно?'){el.textContent='Точно?';setTimeout(function(){if(el.parentNode)el.textContent='Очистити'},3500);return}
+    S.plan={weeks:{}};save();render();toast('План очищено');
+  }
+  else if(a==='sport-sel'){ui.sportSel=el.dataset.s;render()}
+  else if(a==='add-reward')rewardSheet();
+  else if(a==='edit-reward')rewardSheet(el.dataset.id);
+  else if(a==='pin-reward'){
+    S.cfg.goalReward=S.cfg.goalReward===el.dataset.id?'':el.dataset.id;save();render();
+  }
+  else if(a==='buy'){
+    var rw=S.rewards.find(function(x){return x.id===el.dataset.id});if(!rw)return;
+    var b=bal();
+    if(b<rw.cost){toast('Не вистачає '+(rw.cost-b)+' XP');return}
+    S.spent=(S.spent||0)+rw.cost;
+    S.buys.unshift({id:uid(),rid:rw.id,n:rw.n,cost:rw.cost,d:T()});
+    S.buys=S.buys.slice(0,50);
+    if(S.cfg.goalReward===rw.id)S.cfg.goalReward='';
+    save();render();toast('Заслужив: '+rw.n);
+  }
+  else if(a==='undo-buy'){
+    var bx=S.buys.find(function(x){return x.id===el.dataset.id});if(!bx)return;
+    S.spent=Math.max(0,(S.spent||0)-bx.cost);
+    S.buys=S.buys.filter(function(x){return x.id!==bx.id});
+    save();render();toast('Повернуто '+bx.cost+' XP');
+  }
+  else if(a==='export'){
+    var txt=JSON.stringify(S);
+    var ok=false;
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(function(){toast('Копію скопійовано')},function(){dataSheet('out',txt)});
+        ok=true;
+      }
+    }catch(e){}
+    if(!ok)dataSheet('out',txt);
+  }
+  else if(a==='import')dataSheet('in');
+  else if(a==='records')recordsSheet();
+  else if(a==='habit')toggleHab(el.dataset.id);
+  else if(a==='add-habit')habitSheet();
+  else if(a==='edit-habit')habitSheet(el.dataset.id);
+  else if(a==='add-sub')subSheet();
+  else if(a==='edit-sub')subSheet(el.dataset.id);
+  else if(a==='sub-paid'){
+    var sp=S.subs.find(function(x){return x.id===el.dataset.id});if(!sp)return;
+    sp.next=rollDate(sp.next,sp.every);sp.ex=0;
+    save();render();toast(sp.n+': наступне '+fmtDate(sp.next));
+  }
+  else if(a==='add-race')raceSheet();
+  else if(a==='edit-race')raceSheet(el.dataset.id);
+  else if(a==='cat-del'){
+    var cid=el.dataset.id,cats=S.cfg.shopCats;
+    if(cats.length<2)return;
+    if(el.textContent!=='Точно?'){var old=el.textContent;el.textContent='Точно?';setTimeout(function(){if(el.parentNode)el.textContent=old},3500);return}
+    S.cfg.shopCats=cats.filter(function(x){return x.id!==cid});
+    var fb=S.cfg.shopCats[S.cfg.shopCats.length-1].id;
+    S.shop.forEach(function(x){if(x.cat===cid)x.cat=fb});
+    Object.keys(S.shopHist).forEach(function(k){if(S.shopHist[k].cat===cid)S.shopHist[k].cat=fb});
+    save();render();
+  }
+  else if(a==='shop-del'){S.shop=S.shop.filter(function(x){return x.id!==el.dataset.id});save();render()}
+  else if(a==='shop-clear'){S.shop=S.shop.filter(function(x){return !x.done});save();render();toast('Куплене прибрано')}
+  else if(a==='clear-ex'){
+    S.events=S.events.filter(function(x){return !x.ex});S.items=S.items.filter(function(x){return !x.ex});S.places=S.places.filter(function(x){return !x.ex});
+    S.shop=S.shop.filter(function(x){return !x.ex});S.wlog=S.wlog.filter(function(x){return !x.ex});
+    S.rewards=S.rewards.filter(function(x){return !x.ex});S.subs=S.subs.filter(function(x){return !x.ex});
+    if(!S.rewards.some(function(r){return r.id===S.cfg.goalReward}))S.cfg.goalReward='';
+    save();render();toast('Приклади прибрано');
+  }
+});
+document.addEventListener('change',function(ev){
+  var el=ev.target,a=el.dataset&&el.dataset.act;
+  if(a==='qsort'){ui.qSort=el.value;render()}
+  else if(a==='cfg'){
+    if(el.dataset.k==='xp'){S.cfg.xp=el.checked;if(!el.checked&&ui.tab==='rewards')ui.tab='today';save();render()}
+    else if(el.dataset.k==='weekXp'){
+      var wk=Math.round(Number(el.value));
+      if(!(wk>=0&&wk<=10000)){el.value=S.cfg.weekXp;return}
+      S.cfg.weekXp=wk;save();
+    }
+    else if(el.dataset.k==='pool'){
+      var n=Math.round(Number(el.value));
+      if(!(n>=10&&n<=100)){el.value=S.cfg.pool;toast('Довжина басейну — від 10 до 100 м');return}
+      S.cfg.pool=n;save();
+    }
+  }
+  else if(a==='cfg-goal'){
+    var g=Number(el.value);
+    if(!(g>=0)||!isFinite(g)){el.value=S.cfg.goals[el.dataset.k];return}
+    S.cfg.goals[el.dataset.k]=Math.min(100000,Math.round(g*10)/10);save();
+  }
+  else if(a==='cfg-sport'){
+    S.cfg.sportOn[el.dataset.k]=el.checked;
+    if(el.checked&&!S.cfg.goals[el.dataset.k])S.cfg.goals[el.dataset.k]=0;
+    save();render();
+  }
+  else if(a==='cfg-pace'){
+    var v2=el.value.trim().slice(0,6);
+    if(v2&&!/^\d{1,2}([:.,]\d{1,2})?$/.test(v2)){el.value=S.cfg.pace[el.dataset.k];toast('Темп пиши як 5:30, а швидкість як 28');return}
+    S.cfg.pace[el.dataset.k]=v2.replace(/[.,]/,':');save();
+  }
+  else if(a==='home-on'){
+    var hb=S.cfg.home.find(function(x){return x.id===el.dataset.id});if(!hb)return;
+    hb.on=el.checked;save();
+  }
+  else if(a==='cat-name'){
+    var c=S.cfg.shopCats.find(function(x){return x.id===el.dataset.id});if(!c)return;
+    var nm=el.value.trim().slice(0,30);
+    if(!nm){el.value=c.n;return}
+    c.n=nm;save();
+  }
+});
+document.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape'&&sheetOpen){closeSheet();return}
+  if((ev.key==='Enter'||ev.key===' ')&&ev.target.getAttribute&&ev.target.getAttribute('role')==='button'&&ev.target.dataset.act){
+    ev.preventDefault();ev.target.click();
+  }
+});
+window.addEventListener('hashchange',function(){
+  var h=(location.hash||'').slice(1);
+  if((h==='more'||tabs().indexOf(h)>-1)&&h!==ui.tab){ui.tab=h;render()}
+});
+
+/* ---------- boot ---------- */
+render();
+initDb();
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+}
+})();
+</script>
+</body>
+</html>
