@@ -1670,7 +1670,7 @@ function dataSheet(mode,text){
     if(!o||!Array.isArray(o.items)||!Array.isArray(o.events))return setErr('У копії бракує даних. Це точно той текст?');
     var n=norm(o);
     n.rev=(S.rev||0)+1;
-    S=n;saveLocal();dirty=true;setSync(dbDoc?'saving':'local');flush();
+    S=n;saveLocal();dirty=true;setSync(remote?'saving':'local');flush();
     closeSheet();toast('Дані відновлено');
   });
 }
